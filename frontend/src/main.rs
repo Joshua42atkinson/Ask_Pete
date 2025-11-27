@@ -1,4 +1,4 @@
-use frontend::app::App;
+use ask_pete_frontend::app::App;
 use leptos::prelude::*;
 
 pub fn main() {

@@ -13,7 +13,7 @@ use crate::pages::research_dashboard::ResearchDashboard;
 pub fn App() -> impl IntoView {
     view! {
         <Router>
-            <crate::components::boilermaker::BoilermakerShell>
+            <crate::components::dispatcher_console::DispatcherConsole>
                 <Routes fallback=|| "Not Found.">
                     <Route path=path!("/") view=AskPete/>
                     <Route path=path!("/chat") view=crate::components::ai_mirror_chat::AiMirrorChat/>
@@ -25,7 +25,7 @@ pub fn App() -> impl IntoView {
                     <Route path=path!("/ai-test") view=crate::components::ai_test_panel::AiTestPanel/>
                     <Route path=path!("/*any") view=NotFound/>
                 </Routes>
-            </crate::components::boilermaker::BoilermakerShell>
+            </crate::components::dispatcher_console::DispatcherConsole>
         </Router>
     }
 }
