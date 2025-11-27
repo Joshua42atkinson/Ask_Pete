@@ -8,16 +8,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Joshua42atkinson/Day_Dream.git"
+    "url": "git+https://github.com/Joshua42atkinson/Ask_Pete.git"
   },
   "keywords": [],
   "author": "",
   "license": "Apache-2.0",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/Joshua42atkinson/Day_Dream/issues"
+    "url": "https://github.com/Joshua42atkinson/Ask_Pete/issues"
   },
-  "homepage": "https://github.com/Joshua42atkinson/Day_Dream#readme",
+  "homepage": "https://github.com/Joshua42atkinson/Ask_Pete#readme",
   "devDependencies": {
     "tailwindcss": "^3.4.18"
   }
