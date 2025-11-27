@@ -1,0 +1,513 @@
+/* ========================================
+   Boilermaker Industrial Design System
+   Ask Pete - Purdue Expert Tuition Engine
+   ======================================== */
+
+@tailwind base;
+
+/* Base Layer - Typography */
+@layer base {
+  body {
+    font-family: var(--font-ui);
+    background-color: var(--boilermaker-black);
+    color: var(--steam-white);
+  }
+
+  /* Monospace for code and AI text */
+  code,
+  pre,
+  .ai-text {
+    font-family: var(--font-ai);
+  }
+}
+
+/* Components Layer - Industrial Design Elements */
+@layer components {
+
+  /* Chamfered Corners - 45-degree cut corners instead of rounded */
+  .chamfered-corners {
+    clip-path: polygon(8px 0%,
+        calc(100% - 8px) 0%,
+        100% 8px,
+        100% calc(100% - 8px),
+        calc(100% - 8px) 100%,
+        8px 100%,
+        0% calc(100% - 8px),
+        0% 8px);
+  }
+
+  /* Larger chamfer for bigger elements */
+  .chamfered-corners-lg {
+    clip-path: polygon(16px 0%,
+        calc(100% - 16px) 0%,
+        100% 16px,
+        100% calc(100% - 16px),
+        calc(100% - 16px) 100%,
+        16px 100%,
+        0% calc(100% - 16px),
+        0% 16px);
+  }
+
+  /* Boilermaker Panel - Standard industrial panel */
+  .boilermaker-panel {
+    background-color: var(--boilermaker-black);
+    border: 1px solid var(--old-gold);
+    padding: 1.5rem;
+    clip-path: polygon(8px 0%,
+        calc(100% - 8px) 0%,
+        100% 8px,
+        100% calc(100% - 8px),
+        calc(100% - 8px) 100%,
+        8px 100%,
+        0% calc(100% - 8px),
+        0% 8px);
+  }
+
+  /* Mechanical Button - Locomotive control switch appearance */
+  .mechanical-button {
+    @apply px-6 py-3 font-bold uppercase tracking-wide transition-all duration-200;
+    @apply chamfered-corners border-2;
+    @apply active:scale-95;
+  }
+
+  .mechanical-button-primary {
+    @apply mechanical-button;
+    background-color: var(--old-gold);
+    color: var(--pure-black);
+    border-color: var(--old-gold);
+  }
+
+  .mechanical-button-primary:hover {
+    background-color: var(--steam-white);
+    box-shadow: 0 0 20px rgba(206, 184, 136, 0.5);
+  }
+
+  .mechanical-button-secondary {
+    @apply mechanical-button;
+    background-color: transparent;
+    color: var(--old-gold);
+    border-color: var(--old-gold);
+  }
+
+  .mechanical-button-secondary:hover {
+    background-color: rgba(206, 184, 136, 0.1);
+    box-shadow: 0 0 20px rgba(206, 184, 136, 0.3);
+  }
+
+  /* Gold Glow Effect */
+  .gold-glow {
+    box-shadow: 0 0 20px rgba(206, 184, 136, 0.4);
+  }
+
+  .gold-glow-hover {
+    transition: all 200ms ease-in-out;
+  }
+
+  .gold-glow-hover:hover {
+    box-shadow: 0 0 20px rgba(206, 184, 136, 0.6);
+    border-color: var(--old-gold);
+  }
+
+  /* Pressure Gauge - Liquid gold progress bar */
+  .pressure-gauge {
+    position: relative;
+    width: 100%;
+    height: 2rem;
+    background-color: var(--purdue-dark);
+    border: 2px solid var(--old-gold);
+    @apply chamfered-corners;
+    overflow: hidden;
+  }
+
+  .pressure-gauge-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--old-gold) 0%, #e0ca9a 100%);
+    transition: width 500ms ease-out;
+    box-shadow: 0 0 20px rgba(206, 184, 136, 0.5);
+  }
+
+  /* Animated steam/liquid effect */
+  @keyframes liquid-shimmer {
+
+    0%,
+    100% {
+      opacity: 0.8;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .pressure-gauge-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    animation: liquid-shimmer 2s ease-in-out infinite;
+  }
+
+  /* Blueprint Grid Background */
+  .blueprint-grid {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzNhM2EzYSIgb3BhY2l0eT0iMC4zIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=');
+    opacity: 0.1;
+  }
+
+  /* Whistle/Steam Notification Animation */
+  @keyframes whistle-fade {
+    0% {
+      opacity: 0;
+      transform: scale(0.8) translateY(20px);
+    }
+
+    20% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    80% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    100% {
+      opacity: 0;
+      transform: scale(0.8) translateY(-20px);
+    }
+  }
+
+  .whistle-notification {
+    animation: whistle-fade 2.5s ease-in-out;
+    color: var(--old-gold);
+    filter: drop-shadow(0 0 10px rgba(206, 184, 136, 0.8));
+  }
+}
+
+/* Utilities Layer - Boilermaker-specific utilities */
+@layer utilities {
+
+  /* Background Colors */
+  .bg-boilermaker-black {
+    background-color: var(--boilermaker-black);
+  }
+
+  .bg-old-gold {
+    background-color: var(--old-gold);
+  }
+
+  .bg-purdue-dark {
+    background-color: var(--purdue-dark);
+  }
+
+  /* Text Colors */
+  .text-old-gold {
+    color: var(--old-gold);
+  }
+
+  .text-steam-white {
+    color: var(--steam-white);
+  }
+
+  .text-signal-red {
+    color: var(--signal-red);
+  }
+
+  .text-gauge-green {
+    color: var(--gauge-green);
+  }
+
+  .text-purdue-dust {
+    color: var(--purdue-dust);
+  }
+
+  /* Border Colors */
+  .border-old-gold {
+    border-color: var(--old-gold);
+  }
+
+  .border-signal-red {
+    border-color: var(--signal-red);
+  }
+
+  /* Fade in animation */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+}
+
+/* Legacy Purdue Color Support - Map old classes to new system */
+.bg-purdue-gold {
+  background-color: var(--old-gold);
+}
+
+.text-purdue-gold {
+  color: var(--old-gold);
+}
+
+.border-purdue-gold {
+  border-color: var(--old-gold);
+}
+  .mechanical-button-primary {
+    @apply mechanical-button;
+    background-color: var(--old-gold);
+    color: var(--pure-black);
+    border-color: var(--old-gold);
+  }
+
+  .mechanical-button-primary:hover {
+    background-color: var(--steam-white);
+    box-shadow: 0 0 20px rgba(206, 184, 136, 0.5);
+  }
+
+  .mechanical-button-secondary {
+    @apply mechanical-button;
+    background-color: transparent;
+    color: var(--old-gold);
+    border-color: var(--old-gold);
+  }
+
+  .mechanical-button-secondary:hover {
+    background-color: rgba(206, 184, 136, 0.1);
+    box-shadow: 0 0 20px rgba(206, 184, 136, 0.3);
+  }
+
+  /* Gold Glow Effect */
+  .gold-glow {
+    box-shadow: 0 0 20px rgba(206, 184, 136, 0.4);
+  }
+
+  .gold-glow-hover {
+    transition: all 200ms ease-in-out;
+  }
+
+  .gold-glow-hover:hover {
+    box-shadow: 0 0 20px rgba(206, 184, 136, 0.6);
+    border-color: var(--old-gold);
+  }
+
+  /* Pressure Gauge - Liquid gold progress bar */
+  .pressure-gauge {
+    position: relative;
+    width: 100%;
+    height: 2rem;
+    background-color: var(--purdue-dark);
+    border: 2px solid var(--old-gold);
+    @apply chamfered-corners;
+    overflow: hidden;
+  }
+
+  .pressure-gauge-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--old-gold) 0%, #e0ca9a 100%);
+    transition: width 500ms ease-out;
+    box-shadow: 0 0 20px rgba(206, 184, 136, 0.5);
+  }
+
+  /* Animated steam/liquid effect */
+  @keyframes liquid-shimmer {
+
+    0%,
+    100% {
+      opacity: 0.8;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .pressure-gauge-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    animation: liquid-shimmer 2s ease-in-out infinite;
+  }
+
+  /* Blueprint Grid Background */
+  .blueprint-grid {
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzNhM2EzYSIgb3BhY2l0eT0iMC4zIiBzdHJva2Utd2lkdGg9IjEiLz48L2BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=');
+    opacity: 0.1;
+  }
+
+  /* Whistle/Steam Notification Animation */
+  @keyframes whistle-fade {
+    0% {
+      opacity: 0;
+      transform: scale(0.8) translateY(20px);
+    }
+
+    20% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    80% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    100% {
+      opacity: 0;
+      transform: scale(0.8) translateY(-20px);
+    }
+  }
+
+  .whistle-notification {
+    animation: whistle-fade 2.5s ease-in-out;
+    color: var(--old-gold);
+    filter: drop-shadow(0 0 10px rgba(206, 184, 136, 0.8));
+  }
+}
+
+/* Utilities Layer - Boilermaker-specific utilities */
+@layer utilities {
+
+  /* Background Colors */
+  .bg-boilermaker-black {
+    background-color: var(--boilermaker-black);
+  }
+
+  .bg-old-gold {
+    background-color: var(--old-gold);
+  }
+
+  .bg-purdue-dark {
+    background-color: var(--purdue-dark);
+  }
+
+  /* Text Colors */
+  .text-old-gold {
+    color: var(--old-gold);
+  }
+
+  .text-steam-white {
+    color: var(--steam-white);
+  }
+
+  .text-signal-red {
+    color: var(--signal-red);
+  }
+
+  .text-gauge-green {
+    color: var(--gauge-green);
+  }
+
+  .text-purdue-dust {
+    color: var(--purdue-dust);
+  }
+
+  /* Border Colors */
+  .border-old-gold {
+    border-color: var(--old-gold);
+  }
+
+  .border-signal-red {
+    border-color: var(--signal-red);
+  }
+
+  /* Fade in animation */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+}
+
+/* Legacy Purdue Color Support - Map old classes to new system */
+.bg-purdue-gold {
+  background-color: var(--old-gold);
+}
+
+.text-purdue-gold {
+  color: var(--old-gold);
+}
+
+.border-purdue-gold {
+  border-color: var(--old-gold);
+}
+
+.bg-purdue-black {
+  background-color: var(--boilermaker-black);
+}
+
+.text-purdue-black {
+  color: var(--boilermaker-black);
+}
+
+/* ========================================
+   Train Yard Metaphor Design Tokens
+   ======================================== */
+:root {
+  --railyard-dark: #1a1a2e;
+  --track-gray: #3d3d5c;
+  --station-blue: #0f4c81;
+  --signal-green: #2ecc71;
+  --signal-yellow: #f39c12;
+  --signal-red: #e74c3c;
+  --boilermaker-gold: #CFB991;
+}
+
+@layer components {
+  /* Station Styling */
+  .station-node {
+    background-color: var(--station-blue);
+    border: 2px solid var(--track-gray);
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s ease;
+  }
+
+  .station-node:hover {
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.6);
+    border-color: var(--boilermaker-gold);
+  }
+
+  .station-platform {
+    border-bottom: 4px dashed var(--boilermaker-gold);
+  }
+}
+
+@layer utilities {
+  .bg-railyard-dark { background-color: var(--railyard-dark); }
+  .bg-track-gray { background-color: var(--track-gray); }
+  .bg-station-blue { background-color: var(--station-blue); }
+  .text-signal-green { color: var(--signal-green); }
+  .text-signal-yellow { color: var(--signal-yellow); }
+  .text-signal-red { color: var(--signal-red); }
+  .border-boilermaker-gold { border-color: var(--boilermaker-gold); }
+}

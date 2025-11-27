@@ -1,0 +1,69 @@
+[package]
+name = "ask_pete_backend"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[dependencies]
+# This backend depends on the shared data structures
+common = { path = "../common", features = ["ssr"] }
+frontend = { path = "../frontend", package = "ask_pete_frontend" }
+
+# Web Server framework
+axum = "0.7.5"
+tower-http = { version = "0.5", features = ["cors"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+futures-util = "0.3" # [NEW] For stream handling
+
+# HTTP Client
+reqwest = { version = "0.12", features = ["stream", "rustls-tls"] } # [NEW] For async downloads
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+anyhow = "1.0"
+
+# Leptos SSR
+leptos = { version = "0.8.0-rc3", features = ["ssr"] }
+leptos_axum = "0.8.0-rc3"
+
+# State Management
+bevy = { version = "0.14" }
+bevy_ecs = { version = "0.14" }
+bevy_defer = "0.14"
+bevy_yarnspinner = "0.3.0"
+
+# Database
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono"] }
+dotenvy = "0.15"
+uuid = { version = "1.8", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# AI/LLM - Local inference via Candle
+candle-core = "0.8.0"
+candle-nn = "0.8.0"
+candle-transformers = "0.8.0"
+tokenizers = "0.19"
+
+# Pete AI Assistant (NEW)
+hf-hub = "0.3"              # HuggingFace model downloads
+qdrant-client = "1.10"      # Vector database for RAG
+fastembed = "5.3"           #Text embeddings (Rust-native)
+tiktoken-rs = "0.5"         # Token counting for prompts
+dirs = "5.0"                # Cross-platform directory paths
+
+# Caching and concurrency
+lru = "0.12"
+dashmap = "5"
+
+# Logging
+log = "0.4"
+
+# Static Asset Embedding
+rust-embed = "8.5"
+mime_guess = "2.0"

@@ -1,0 +1,33 @@
+# Rust artifacts
+**/target/
+frontend/dist/
+
+# Ignore all .env files
+.env
+**/.env
+
+# Editor configuration
+.vscode/
+.idea/
+
+# OS-specific files
+.DS_Store
+
+# Log files
+*.log
+node_modules/
+
+# Large model files (download via setup wizard)
+frontend/public/models/*.gguf
+*.gguf
+
+# Build artifacts
+backend/libcheck_quantized.rlib
+backend/src/check_quantized.rs
+
+# Test files
+test_payload.json
+
+# Duplicate files
+frontend/src/pages/authoring (1).rs
+
