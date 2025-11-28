@@ -26,7 +26,7 @@ use tokio::sync::Mutex;
 /// Main Socratic dialogue engine
 pub struct SocraticEngine {
     gemini_client: Option<crate::ai::llm::gemini_client::GeminiClient>,
-    gemma_model: Option<Arc<Mutex<crate::ai::llm::GemmaModel>>>,
+    gemma_model: Option<crate::ai::local_inference::GemmaModel>,
     antigravity_client: Option<crate::antigravity::AntigravityClient>,
     memory: Arc<ConversationMemory>,
 }
@@ -55,7 +55,7 @@ impl SocraticEngine {
     }
 
     /// Set the local Gemma model
-    pub fn set_gemma_model(&mut self, model: Arc<Mutex<crate::ai::llm::GemmaModel>>) {
+    pub fn set_gemma_model(&mut self, model: crate::ai::local_inference::GemmaModel) {
         self.gemma_model = Some(model);
         log::info!("Local Gemma model connected to Socratic engine");
     }
@@ -99,15 +99,14 @@ impl SocraticEngine {
         // 5. Generate response using LLM
         let response_text = if let Some(ref model) = self.gemma_model {
             // Use local Gemma model
-            let mut llm = model.lock().await;
             // TODO: Pass proper config
-            let config = crate::ai::llm::GenerationConfig {
+            let config = crate::ai::local_inference::GenerationConfig {
                 max_tokens: 1024,
                 temperature: 0.7,
                 top_p: 0.9,
                 repeat_penalty: 1.1,
             };
-            match llm.generate(&prompt, config) {
+            match model.generate(prompt.clone(), config).await {
                 Ok(text) => text,
                 Err(e) => {
                     log::error!("Gemma generation failed: {}", e);

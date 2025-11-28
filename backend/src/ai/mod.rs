@@ -2,6 +2,7 @@ pub mod conversation_memory;
 // pub mod embedding; // RAG embedding service
 pub mod architect;
 pub mod llm;
+pub mod local_inference; // [NEW]
 pub mod prompts;
 pub mod socratic_engine; // [NEW]
 pub mod memory; // [NEW]

@@ -39,7 +39,7 @@ leptos_axum = "0.8.0-rc3"
 # State Management
 bevy = { version = "0.14" }
 bevy_ecs = { version = "0.14" }
-bevy_defer = "0.14"
+bevy_defer = "0.12"
 bevy_yarnspinner = "0.3.0"
 
 # Database

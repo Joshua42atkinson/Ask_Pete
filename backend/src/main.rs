@@ -34,7 +34,7 @@ use routes::research::research_routes;
 use routes::weigh_station_routes::weigh_station_routes; // [NEW] - Enabled
 use static_assets::Assets; // [NEW]
 
-use crate::ai::llm::gemma_engine::{GemmaConfigWrapper, GemmaModel}; // Enabled
+use crate::ai::local_inference::{GemmaConfigWrapper, GemmaModel}; // [NEW] - Updated import
 use crate::handlers::weigh_station::WeighStation; // [NEW] // [NEW] - Enabled
 
 use crate::game::components::*;
@@ -61,6 +61,7 @@ fn run_bevy_app(
     app.add_plugins(bevy::asset::AssetPlugin::default());
     app.add_plugins(bevy::audio::AudioPlugin::default());
     app.add_plugins(YarnSpinnerPlugin::new());
+    app.add_plugins(bevy_defer::AsyncPlugin::default_settings()); // [NEW] - Added bevy_defer
     app.add_plugins(MultiplayerPlugin); // [NEW]
 
     // Register Events
@@ -257,7 +258,7 @@ async fn main() {
     let shared_gemma_model = match GemmaModel::load(gemma_config) {
         Ok(model) => {
             println!("✅ Gemma 3 Model Loaded Successfully.");
-            Some(Arc::new(tokio::sync::Mutex::new(model)))
+            Some(model) // No Arc<Mutex<>> needed, it's Clone
         }
         Err(e) => {
             println!("⚠️ Failed to load Gemma 3 model: {}", e);
