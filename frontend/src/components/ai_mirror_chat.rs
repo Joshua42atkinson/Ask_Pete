@@ -200,7 +200,7 @@ async fn send_ai_message(message: String) -> Result<String, String> {
 
     let request_body = ChatRequest { message };
 
-    let response = gloo_net::http::Request::post("http://localhost:3000/api/pete/chat")
+    let response = gloo_net::http::Request::post("/api/pete/chat")
         .header("Content-Type", "application/json")
         .json(&request_body)
         .map_err(|e| format!("Failed to serialize request: {}", e))?

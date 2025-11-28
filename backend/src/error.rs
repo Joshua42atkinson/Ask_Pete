@@ -24,6 +24,9 @@ pub enum AppError {
 
     #[error("Internal Server Error")]
     InternalServerError,
+
+    #[error("Unexpected error: {0}")]
+    Anyhow(#[from] anyhow::Error),
 }
 
 /// A custom Result type for our application.
@@ -44,7 +47,13 @@ impl IntoResponse for AppError {
                 tracing::error!("Database Error: {:?}", e);
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error")
             }
-            AppError::InternalServerError => (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error"),
+            AppError::InternalServerError => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error")
+            }
+            AppError::Anyhow(e) => {
+                tracing::error!("Unexpected Error: {:?}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error")
+            }
         };
 
         let body = Json(json!({

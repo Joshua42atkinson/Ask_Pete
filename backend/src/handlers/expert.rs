@@ -12,7 +12,18 @@ pub async fn get_graph(State(app_state): State<AppState>) -> Result<Json<StoryGr
             let default_graph = StoryGraph {
                 id: "demo_graph".to_string(),
                 title: "Simulation Story".to_string(),
-                nodes: vec![],
+                nodes: vec![common::expert::StoryNode {
+                    id: "start".to_string(),
+                    title: "The Beginning".to_string(),
+                    content: "Welcome to the simulation. This is a default node.".to_string(),
+                    x: 0.0,
+                    y: 0.0,
+                    passenger_count: 0,
+                    complexity_level: 1,
+                    learner_profiles: vec![],
+                    gardens_active: vec![],
+                    required_stats: std::collections::HashMap::new(),
+                }],
                 connections: vec![],
             };
             return Ok(Json(default_graph));

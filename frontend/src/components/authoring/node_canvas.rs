@@ -1,5 +1,6 @@
 use crate::api::{get_graph, save_graph};
 // use crate::components::authoring::property_editor::PropertyEditor;
+use crate::components::authoring::blueprint_station::BlueprintStation; // [NEW]
 use crate::components::authoring::story_node::StoryNodeComponent;
 use crate::components::authoring::template_selector::TemplateSelector;
 use common::expert::{Connection, StoryGraph, StoryNode};
@@ -14,6 +15,7 @@ pub fn NodeCanvas() -> impl IntoView {
     let (selected_node_id, set_selected_node_id) = signal(None::<String>);
 
     let (show_template_selector, set_show_template_selector) = signal(false);
+    let (show_blueprint_station, set_show_blueprint_station) = signal(false); // [NEW]
     let navigate = leptos_router::hooks::use_navigate();
 
     // Loading and error states
@@ -205,7 +207,7 @@ pub fn NodeCanvas() -> impl IntoView {
             <div class="absolute top-4 right-4 z-10 flex gap-2">
                 <button
                     class="px-4 py-2 bg-boilermaker-gold hover:bg-white text-black rounded shadow-lg font-bold transition-colors border-2 border-boilermaker-gold flex items-center gap-2"
-                    on:click=move |_| set_show_template_selector.set(true)
+                    on:click=move |_| set_show_blueprint_station.set(true)
                 >
                     <span>"🤖"</span>
                     "Design with Pete"
@@ -429,6 +431,24 @@ pub fn NodeCanvas() -> impl IntoView {
                             for node in new_nodes {
                                 set_nodes.update(|n| n.push(RwSignal::new(node)));
                             }
+                        })}
+                    />
+                }.into_any()
+            } else {
+                view! { <span /> }.into_any()
+            }}
+
+            // Blueprint Station Modal [NEW]
+            {move || if show_blueprint_station.get() {
+                view! {
+                    <BlueprintStation
+                        on_close=Callback::new(move |_| set_show_blueprint_station.set(false))
+                        on_generate={Callback::new(move |graph: StoryGraph| {
+                            // Replace current graph with generated one
+                            let node_signals = graph.nodes.into_iter().map(|n| RwSignal::new(n)).collect();
+                            set_nodes.set(node_signals);
+                            set_connections.set(graph.connections);
+                            set_graph_meta.set((graph.id, graph.title));
                         })}
                     />
                 }.into_any()

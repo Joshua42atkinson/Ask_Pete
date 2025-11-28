@@ -67,7 +67,7 @@ pub struct CreateSessionResponse {
 }
 
 pub async fn create_session() -> Result<Uuid, String> {
-    let res = gloo_net::http::Request::post("http://localhost:3000/api/ai-mirror/create-session")
+    let res = gloo_net::http::Request::post("/api/ai-mirror/create-session")
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -81,7 +81,7 @@ pub async fn create_session() -> Result<Uuid, String> {
 }
 
 pub async fn send_message(req: SendMessageRequest) -> Result<SendMessageResponse, String> {
-    let res = gloo_net::http::Request::post("http://localhost:3000/api/ai-mirror/send-message")
+    let res = gloo_net::http::Request::post("/api/ai-mirror/send-message")
         .json(&req)
         .map_err(|e| e.to_string())?
         .send()
@@ -101,7 +101,7 @@ pub async fn send_message(req: SendMessageRequest) -> Result<SendMessageResponse
 use common::expert::StoryGraph;
 
 pub async fn get_graph() -> Result<StoryGraph, String> {
-    let res = gloo_net::http::Request::get("http://localhost:3000/api/expert/graph")
+    let res = gloo_net::http::Request::get("/api/expert/graph")
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -115,7 +115,7 @@ pub async fn get_graph() -> Result<StoryGraph, String> {
 }
 
 pub async fn save_graph(graph: StoryGraph) -> Result<StoryGraph, String> {
-    let res = gloo_net::http::Request::post("http://localhost:3000/api/expert/graph")
+    let res = gloo_net::http::Request::post("/api/expert/graph")
         .json(&graph)
         .map_err(|e| e.to_string())?
         .send()
@@ -154,7 +154,7 @@ pub struct DownloadRequest {
 }
 
 pub async fn get_models() -> Result<Vec<ModelInfo>, String> {
-    let res = gloo_net::http::Request::get("http://localhost:3000/api/models")
+    let res = gloo_net::http::Request::get("/api/models")
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -169,7 +169,7 @@ pub async fn get_models() -> Result<Vec<ModelInfo>, String> {
 
 pub async fn download_model(model_id: String) -> Result<(), String> {
     let req = DownloadRequest { model_id };
-    let res = gloo_net::http::Request::post("http://localhost:3000/api/models/download")
+    let res = gloo_net::http::Request::post("/api/models/download")
         .json(&req)
         .map_err(|e| e.to_string())?
         .send()
@@ -184,7 +184,7 @@ pub async fn download_model(model_id: String) -> Result<(), String> {
 }
 
 pub async fn get_download_progress() -> Result<DownloadProgress, String> {
-    let res = gloo_net::http::Request::get("http://localhost:3000/api/models/progress")
+    let res = gloo_net::http::Request::get("/api/models/progress")
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -225,7 +225,7 @@ pub struct VoteRequest {
 }
 
 pub async fn fetch_campaign_state() -> Result<CampaignState, String> {
-    let res = gloo_net::http::Request::get("http://localhost:3000/api/campaign/state")
+    let res = gloo_net::http::Request::get("/api/campaign/state")
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -243,7 +243,7 @@ pub async fn submit_vote(campaign_id: String, option_index: usize) -> Result<(),
         campaign_id,
         option_index,
     };
-    let res = gloo_net::http::Request::post("http://localhost:3000/api/campaign/vote")
+    let res = gloo_net::http::Request::post("/api/campaign/vote")
         .json(&req)
         .map_err(|e| e.to_string())?
         .send()

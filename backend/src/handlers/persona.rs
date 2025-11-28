@@ -75,7 +75,7 @@ pub async fn get_archetypes(
         None => return Ok(Json(Vec::new())),
     };
 
-    let rows = match sqlx::query("SELECT id, name, description FROM archetypes")
+    let rows = match sqlx::query("SELECT id, name, description, locomotive_type, fuel_efficiency, cargo_capacity, durability FROM archetypes")
         .fetch_all(pool)
         .await
     {
@@ -94,6 +94,10 @@ pub async fn get_archetypes(
             id: row.get("id"),
             name: row.get("name"),
             description: row.get("description"),
+            locomotive_type: row.get("locomotive_type"),
+            fuel_efficiency: row.get("fuel_efficiency"),
+            cargo_capacity: row.get("cargo_capacity"),
+            durability: row.get("durability"),
         })
         .collect();
 

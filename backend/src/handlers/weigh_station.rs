@@ -17,14 +17,21 @@ pub struct WordPhysics {
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+use crate::ai::memory::{Document, VectorStore}; // [NEW]
+
 pub struct WeighStation {
     db: PgPool,
     llm: Arc<Mutex<GemmaModel>>,
+    memory: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW]
 }
 
 impl WeighStation {
-    pub fn new(db: PgPool, llm: Arc<Mutex<GemmaModel>>) -> Self {
-        Self { db, llm }
+    pub fn new(
+        db: PgPool,
+        llm: Arc<Mutex<GemmaModel>>,
+        memory: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW]
+    ) -> Self {
+        Self { db, llm, memory }
     }
 
     /// The core loop: Takes a raw word, weighs it, stores it.
@@ -108,4 +115,52 @@ impl WeighStation {
 
         Ok(())
     }
+
+    /// Calculates the "Intrinsic Load" (Cognitive Weight) of a text.
+    pub fn calculate_intrinsic_load(text: &str) -> TextAnalysisResult {
+        let words: Vec<&str> = text.split_whitespace().collect();
+        let word_count = words.len();
+
+        // Simple sentence splitting by punctuation
+        let sentence_count = text
+            .split(|c| c == '.' || c == '!' || c == '?')
+            .filter(|s| !s.trim().is_empty())
+            .count();
+
+        // Avoid division by zero
+        let safe_word_count = word_count.max(1);
+        let safe_sentence_count = sentence_count.max(1);
+
+        // Calculate Lexical Density (Simplified: assume words > 6 chars are "content" words for now)
+        // In a real implementation, we'd use a POS tagger to find Nouns/Verbs vs Prepositions.
+        let complex_words = words.iter().filter(|w| w.len() > 6).count();
+        let lexical_density = (complex_words as f32 / safe_word_count as f32) * 100.0;
+
+        // Calculate Average Sentence Length
+        let avg_sentence_length = safe_word_count as f32 / safe_sentence_count as f32;
+
+        // Formula for Intrinsic Load (Heuristic)
+        // Load = (Density * 0.1) + (AvgSentenceLength * 0.2)
+        let raw_load = (lexical_density * 0.1) + (avg_sentence_length * 0.2);
+
+        // Normalize to 0-10 scale (approximate)
+        let intrinsic_load = raw_load.clamp(0.0, 10.0);
+
+        TextAnalysisResult {
+            word_count,
+            sentence_count,
+            lexical_density,
+            intrinsic_load,
+            is_overloaded: intrinsic_load > 7.0, // Threshold for "Red Zone"
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TextAnalysisResult {
+    pub word_count: usize,
+    pub sentence_count: usize,
+    pub lexical_density: f32,
+    pub intrinsic_load: f32, // 0.0 to 10.0
+    pub is_overloaded: bool,
 }

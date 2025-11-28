@@ -26,6 +26,7 @@ pub struct AppState {
         Option<Arc<tokio::sync::Mutex<crate::handlers::weigh_station::WeighStation>>>,
     pub shared_campaign_state: SharedCampaignStateResource, // [NEW]
     pub vote_inbox: VoteInbox,                              // [NEW]
+    pub memory_store: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW] - Local Vector DB
 }
 
 impl axum::extract::FromRef<AppState> for LeptosOptions {

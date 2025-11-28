@@ -16,8 +16,15 @@ pub struct WeighRequest {
     pub word: String,
 }
 
+#[derive(Deserialize)]
+pub struct AnalyzeRequest {
+    pub text: String,
+}
+
 pub fn weigh_station_routes() -> Router<AppState> {
-    Router::new().route("/weigh", post(weigh_word))
+    Router::new()
+        .route("/weigh", post(weigh_word))
+        .route("/analyze", post(analyze_text))
 }
 
 async fn weigh_word(
@@ -39,4 +46,13 @@ async fn weigh_word(
         )
             .into_response()
     }
+}
+
+async fn analyze_text(
+    State(_state): State<AppState>,
+    Json(payload): Json<AnalyzeRequest>,
+) -> impl IntoResponse {
+    // Static method, doesn't need state lock
+    let result = WeighStation::calculate_intrinsic_load(&payload.text);
+    Json(result).into_response()
 }

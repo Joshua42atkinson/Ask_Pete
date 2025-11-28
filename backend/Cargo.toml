@@ -16,10 +16,10 @@ tower-http = { version = "0.5", features = ["cors"] }
 # Async runtime
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
-futures-util = "0.3" # [NEW] For stream handling
+futures-util = "0.3"
 
 # HTTP Client
-reqwest = { version = "0.12", features = ["stream", "rustls-tls", "json"] } # [NEW] For async downloads and API calls
+reqwest = { version = "0.12", features = ["stream", "rustls-tls", "json"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -27,6 +27,10 @@ serde_json = "1.0"
 thiserror = "1.0"
 tracing = "0.1"
 anyhow = "1.0"
+oauth2 = "4.4"
+jsonwebtoken = "9.2"
+uuid = { version = "1.10", features = ["v4", "serde"] }
+async-trait = "0.1"
 
 # Leptos SSR
 leptos = { version = "0.8.0-rc3", features = ["ssr"] }
@@ -40,9 +44,8 @@ bevy_yarnspinner = "0.3.0"
 
 # Database
 sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono"] }
-pgvector = { version = "0.4" }  # Vector similarity search for RAG
+pgvector = { version = "0.4" }
 dotenvy = "0.15"
-uuid = { version = "1.8", features = ["v4", "serde"] }
 chrono = { version = "=0.4.38", features = ["serde"] }
 
 # AI/LLM - Local inference via Candle (Gemma 3)
@@ -50,18 +53,17 @@ candle-core = "0.8.0"
 candle-nn = "0.8.0"
 candle-transformers = "0.8.0"
 tokenizers = "0.19"
-ort = { version = "2.0.0-rc.9", features = ["load-dynamic", "cuda"] } 
+# ort = { version = "2.0.0-rc.9", features = ["load-dynamic", "cuda", "download-binaries"] }
 
 # Local Vector DB (The "Brain" Storage)
-# lancedb = "0.4" # Requires PROTOC installed
-
+lancedb = "0.4"
 
 # Pete AI Assistant (NEW)
-hf-hub = "0.3"              # HuggingFace model downloads
-qdrant-client = "1.10"      # Vector database for RAG
-fastembed = "5.3"           #Text embeddings (Rust-native)
-tiktoken-rs = "0.5"         # Token counting for prompts
-dirs = "5.0"                # Cross-platform directory paths
+hf-hub = "0.3"
+qdrant-client = "1.10"
+# fastembed = "5.3"
+tiktoken-rs = "0.5"
+dirs = "5.0"
 
 # Caching and concurrency
 lru = "0.12"

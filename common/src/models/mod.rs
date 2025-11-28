@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Represents a "Lesson" or "Node" in the curriculum.
 /// Metaphor: A car added to the train.

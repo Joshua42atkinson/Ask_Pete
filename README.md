@@ -34,11 +34,12 @@
 
 ## 📦 Installation
 
-### Windows (Pre-built)
+### Windows (Easy Install)
 
-1. Download the latest `AskPete_Setup.exe` from the [Releases](https://github.com/Joshua42atkinson/Ask_Pete/releases) page.
-2. Run the installer.
-3. Launch "Ask Pete" from your desktop.
+1. Download the repository (or unzip the release).
+2. Double-click **`install.bat`**.
+3. Follow the on-screen prompts (it will set up Docker and download AI models).
+4. When the "All Aboard!" message appears, open your browser to `http://localhost:8080`.
 
 ### Building from Source
 

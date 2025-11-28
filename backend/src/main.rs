@@ -16,6 +16,7 @@ mod domain;
 mod error;
 mod game;
 mod handlers;
+mod middleware; // [NEW]
 mod plugins; // Plugin registry and implementations
 mod routes;
 mod services; // Model Manager and Pete AI
@@ -108,7 +109,7 @@ fn run_bevy_app(
     app.world_mut().spawn(StudentBundle {
         name: Name::new(simulated_player.name),
         persona: Persona {
-            archetype: Archetype::Novice,
+            archetype: Archetype::Innocent,
             shadow_trait: "None".to_string(),
             projective_dissonance: 0.0,
         },
@@ -315,13 +316,25 @@ async fn main() {
         crate::services::pete::PeteAssistant::new().expect("Failed to initialize PeteAssistant"),
     );
 
-    // Initialize Weigh Station & Shared Gemma Model
+    // Initialize Local Vector DB (LanceDB)
+    let memory_store = match crate::ai::memory::LanceDbConnection::new("brain_vectors").await {
+        Ok(store) => {
+            println!("🧠 [Memory] Local Vector DB initialized at 'data/brain_vectors'");
+            Some(Arc::new(store))
+        }
+        Err(e) => {
+            eprintln!("⚠️ [Memory] Failed to initialize LanceDB: {}", e);
+            None
+        }
+    };
 
+    // Initialize Weigh Station & Shared Gemma Model
     let weigh_station = if let Some(ref model) = shared_gemma_model {
         if let Some(db_pool) = pool.clone() {
             Some(Arc::new(tokio::sync::Mutex::new(WeighStation::new(
                 db_pool,
                 model.clone(),
+                memory_store.clone(), // [NEW]
             ))))
         } else {
             println!("⚠️ Database not available, Weigh Station disabled.");
@@ -349,6 +362,7 @@ async fn main() {
         weigh_station,         // Enabled
         shared_campaign_state, // [NEW]
         vote_inbox,            // [NEW]
+        memory_store,          // [NEW]
     };
 
     // Create Model App State
@@ -362,7 +376,17 @@ async fn main() {
         .allow_methods(Any)
         .allow_headers(Any);
 
+    // ... imports ...
+
     let app = Router::new()
+        .route(
+            "/auth/login",
+            axum::routing::get(crate::handlers::auth::google_login_url),
+        ) // [NEW]
+        .route(
+            "/auth/callback",
+            axum::routing::get(crate::handlers::auth::google_callback),
+        ) // [NEW]
         .merge(player_routes(&app_state))
         .merge(persona_routes(&app_state))
         .merge(expert_routes(&app_state))
@@ -380,6 +404,13 @@ async fn main() {
         .nest("/api/weigh_station", weigh_station_routes()) // [NEW] - Enabled
         .merge(crate::routes::scenarios::scenarios_routes(&app_state)) // [NEW]
         .merge(crate::routes::campaign_routes::campaign_routes()) // [NEW]
+        .route(
+            "/api/architect/blueprint",
+            axum::routing::post(crate::handlers::architect::generate_blueprint),
+        ) // [NEW]
+        .layer(axum::middleware::from_fn(
+            crate::middleware::auth::auth_middleware,
+        )) // [NEW] Global Auth Middleware
         .layer(cors)
         .with_state(app_state) // Apply state BEFORE fallback
         .fallback(static_handler); // Fallback LAST so it doesn't catch API routes

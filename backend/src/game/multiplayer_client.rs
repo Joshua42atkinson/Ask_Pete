@@ -124,7 +124,9 @@ impl Plugin for MultiplayerPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CampaignState>()
             .add_event::<StateUpdateEvent>()
+            .add_event::<StateUpdateEvent>()
             .add_event::<ChatMessageEvent>()
+            .add_event::<crate::game::components::VoteEvent>() // [FIX]
             .add_systems(Update, (sync_campaign_state, process_vote_events));
     }
 }

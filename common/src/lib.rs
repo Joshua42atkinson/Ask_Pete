@@ -47,6 +47,37 @@ pub struct Archetype {
     pub id: i32,
     pub name: String,
     pub description: Option<String>,
+    // Locomotive Profile Stats
+    #[serde(default = "default_locomotive_type")]
+    pub locomotive_type: String,
+    #[serde(default = "default_efficiency")]
+    pub fuel_efficiency: f64,
+    #[serde(default = "default_capacity")]
+    pub cargo_capacity: f64,
+    #[serde(default = "default_durability")]
+    pub durability: f64,
+}
+
+fn default_locomotive_type() -> String {
+    "Standard".to_string()
+}
+fn default_efficiency() -> f64 {
+    1.0
+}
+fn default_capacity() -> f64 {
+    10.0
+}
+fn default_durability() -> f64 {
+    1.0
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct LocomotiveProfile {
+    pub archetype_name: String,
+    pub locomotive_type: String,
+    pub fuel_efficiency: f64,
+    pub cargo_capacity: f64,
+    pub durability: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

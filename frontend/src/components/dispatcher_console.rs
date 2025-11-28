@@ -31,10 +31,9 @@ pub fn DispatcherConsole(children: Children) -> impl IntoView {
     Effect::new(move |_| {
         spawn_local(async move {
             while is_active.get() {
-                if let Ok(response) =
-                    gloo_net::http::Request::get("http://localhost:3000/api/simulation/state")
-                        .send()
-                        .await
+                if let Ok(response) = gloo_net::http::Request::get("/api/simulation/state")
+                    .send()
+                    .await
                 {
                     if let Ok(state) = response.json::<PhysicsState>().await {
                         set_physics_state.set(state);

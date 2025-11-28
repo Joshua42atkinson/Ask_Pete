@@ -31,11 +31,18 @@ use serde::{Deserialize, Serialize};
 #[reflect(Component)]
 pub enum Archetype {
     #[default]
-    Novice,
-    Sage,
+    Innocent,
+    Orphan,
     Hero,
+    Caregiver,
+    Explorer,
+    Rebel,
+    Lover,
+    Creator,
     Jester,
-    // Add more as needed
+    Sage,
+    Magician,
+    Ruler,
 }
 
 // Persona: The mask the player wears

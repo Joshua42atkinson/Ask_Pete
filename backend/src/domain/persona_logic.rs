@@ -1,6 +1,6 @@
+use common::{Archetype, QuizSubmission};
 use sqlx::{PgPool, Row};
 use std::collections::HashMap;
-use common::{QuizSubmission, Archetype};
 
 pub struct ArchetypeCalculationResult {
     pub primary_archetype: Archetype,
@@ -34,7 +34,7 @@ pub async fn calculate_archetype(
         .map(|(id, _)| id)
         .ok_or("No archetype points found for submission")?;
 
-    let archetype_row = sqlx::query("SELECT id, name, description FROM archetypes WHERE id = $1")
+    let archetype_row = sqlx::query("SELECT id, name, description, locomotive_type, fuel_efficiency, cargo_capacity, durability FROM archetypes WHERE id = $1")
         .bind(primary_archetype_id)
         .fetch_one(pool)
         .await
@@ -44,12 +44,16 @@ pub async fn calculate_archetype(
         id: archetype_row.get("id"),
         name: archetype_row.get("name"),
         description: archetype_row.get("description"),
+        locomotive_type: archetype_row.get("locomotive_type"),
+        fuel_efficiency: archetype_row.get("fuel_efficiency"),
+        cargo_capacity: archetype_row.get("cargo_capacity"),
+        durability: archetype_row.get("durability"),
     };
 
     let stat_buff_rows = sqlx::query(
         "SELECT s.name, asb.buff_value FROM archetype_stat_buffs asb
          JOIN stats s ON asb.stat_id = s.id
-         WHERE asb.archetype_id = $1"
+         WHERE asb.archetype_id = $1",
     )
     .bind(primary_archetype_id)
     .fetch_all(pool)
