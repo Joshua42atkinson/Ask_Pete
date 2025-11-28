@@ -1,3 +1,4 @@
+use crate::theme::makeup::MakeupStyle;
 /// Boilermaker Industrial Design System
 ///
 /// This module provides the centralized theme system for the "Ask Pete" application,
@@ -7,6 +8,55 @@
 /// # Boilermaker Color Palette
 ///
 /// Official Purdue colors and industrial-themed variants for the "Ask Pete" interface.
+use leptos::prelude::*;
+
+#[derive(Clone, Debug, Copy)]
+pub struct ThemeContext {
+    pub makeup: Signal<MakeupStyle>,
+    pub set_makeup: WriteSignal<MakeupStyle>,
+}
+
+pub fn provide_theme_context() {
+    // Try to load from local storage
+    let initial_makeup = if let Some(window) = web_sys::window() {
+        if let Ok(Some(storage)) = window.local_storage() {
+            if let Ok(Some(json)) = storage.get_item("pete_makeup_style") {
+                serde_json::from_str(&json).unwrap_or_default()
+            } else {
+                MakeupStyle::default()
+            }
+        } else {
+            MakeupStyle::default()
+        }
+    } else {
+        MakeupStyle::default()
+    };
+
+    let (makeup, set_makeup) = signal(initial_makeup);
+
+    // Persist changes to local storage
+    Effect::new(move |_| {
+        let style = makeup.get();
+        if let Some(window) = web_sys::window() {
+            if let Ok(Some(storage)) = window.local_storage() {
+                let _ = storage.set_item(
+                    "pete_makeup_style",
+                    &serde_json::to_string(&style).unwrap_or_default(),
+                );
+            }
+        }
+    });
+
+    provide_context(ThemeContext {
+        makeup: makeup.into(),
+        set_makeup,
+    });
+}
+
+pub fn use_theme() -> ThemeContext {
+    use_context::<ThemeContext>().expect("ThemeContext not found")
+}
+
 pub mod colors {
     /// Primary Background: Boilermaker Black
     /// Used for main backgrounds to create the industrial, console-like feel
@@ -36,6 +86,9 @@ pub mod colors {
 
     /// Dust/secondary text color
     pub const PURDUE_DUST: &str = "#a0a0a0";
+
+    /// Majestic Royal Neon Purple (for Pete's branding)
+    pub const MAJESTIC_ROYAL_NEON_PURPLE: &str = "#BC13FE";
 }
 
 /// # Typography System
@@ -130,7 +183,37 @@ pub fn gold_glow_hover() -> String {
 
 /// Returns CSS classes for the industrial grid background
 pub fn blueprint_grid_background() -> String {
-    "fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzNhM2EzYSIgb3BhY2l0eT0iMC4zIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-10 pointer-events-none z-0".to_string()
+    "fixed inset-0 bg-[image:var(--bg-pattern)] opacity-10 pointer-events-none z-0".to_string()
+}
+
+/// Generates the CSS variables style block for the current makeup
+#[component]
+pub fn MakeupLayer() -> impl IntoView {
+    let theme = use_theme();
+
+    view! {
+        <style>
+            {move || {
+                let style = theme.makeup.get();
+                let palette = style.palette();
+
+                // We map the palette to CSS variables that can override the defaults
+                // Note: The base components need to be updated to use these variables or we use a global override strategy
+                // For now, we'll just set some root variables that we can start using
+                format!(
+                    ":root {{ --bg-primary: {}; --bg-secondary: {}; --accent-primary: {}; --accent-secondary: {}; --text-primary: {}; --border-color: {}; --glow-color: {}; --bg-pattern: {}; }}",
+                    palette.background_primary.unwrap_or(colors::BOILERMAKER_BLACK),
+                    palette.background_secondary.unwrap_or(colors::PURDUE_DARK),
+                    palette.accent_primary.unwrap_or(colors::OLD_GOLD),
+                    palette.accent_secondary.unwrap_or(colors::STEAM_WHITE), // Default secondary accent
+                    palette.text_primary.unwrap_or(colors::STEAM_WHITE),
+                    palette.border_color.unwrap_or(colors::OLD_GOLD),
+                    palette.glow_color.unwrap_or(colors::OLD_GOLD),
+                    palette.background_pattern.unwrap_or("none"),
+                )
+            }}
+        </style>
+    }
 }
 
 #[cfg(test)]

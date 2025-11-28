@@ -14,13 +14,16 @@ pub struct WordPhysics {
     pub tags: Vec<String>,
 }
 
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
 pub struct WeighStation {
     db: PgPool,
-    llm: GemmaModel,
+    llm: Arc<Mutex<GemmaModel>>,
 }
 
 impl WeighStation {
-    pub fn new(db: PgPool, llm: GemmaModel) -> Self {
+    pub fn new(db: PgPool, llm: Arc<Mutex<GemmaModel>>) -> Self {
         Self { db, llm }
     }
 
@@ -58,7 +61,8 @@ impl WeighStation {
             ..Default::default()
         };
 
-        let json_response = self.llm.generate(&prompt, config)?;
+        let mut llm = self.llm.lock().await;
+        let json_response = llm.generate(&prompt, config)?;
 
         // 3. Parse the Physics
         // Clean markdown code blocks if present

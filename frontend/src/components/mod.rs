@@ -17,6 +17,7 @@ pub mod message_suggestions;
 pub mod model_selector;
 pub mod motivational_design;
 pub mod persona_quiz;
+pub mod personalize_pete;
 pub mod reflection_form;
 pub mod systems_thinking;
 pub mod tech_analysis;

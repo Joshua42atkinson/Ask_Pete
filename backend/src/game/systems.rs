@@ -312,3 +312,29 @@ pub fn sync_physics_to_shared(
         }
     }
 }
+
+// [NEW] System to sync Campaign State to Shared Resource (Bevy -> Axum)
+// This is redundant if sync_campaign_state (in multiplayer_client.rs) handles the sync FROM shared.
+// But if the game logic modifies the campaign state (e.g. adding coal), we need to write back.
+pub fn sync_campaign_to_shared(
+    current_state: Res<crate::game::multiplayer_client::CampaignState>,
+    shared_state: Res<crate::game::components::SharedCampaignStateResource>,
+) {
+    if current_state.is_changed() {
+        if let Ok(mut guard) = shared_state.0.write() {
+            *guard = current_state.clone();
+        }
+    }
+}
+
+// [NEW] System to sync Vote Inbox (Axum -> Bevy)
+pub fn sync_vote_inbox(
+    inbox: Res<crate::game::components::VoteInbox>,
+    mut event_writer: EventWriter<crate::game::components::VoteEvent>,
+) {
+    if let Ok(mut guard) = inbox.0.write() {
+        for event in guard.drain(..) {
+            event_writer.send(event);
+        }
+    }
+}

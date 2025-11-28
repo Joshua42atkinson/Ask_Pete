@@ -15,8 +15,12 @@ use crate::pages::knowledge_library::KnowledgeLibrary;
 use crate::pages::train_yard_layout::TrainYardLayout;
 // use crate::pages::weigh_station::WeighStation;
 
+use crate::ui_theme::provide_theme_context;
+
 #[component]
 pub fn App() -> impl IntoView {
+    provide_theme_context();
+
     view! {
         <Router>
             <Routes fallback=|| "Not Found.">
@@ -29,7 +33,9 @@ pub fn App() -> impl IntoView {
                 </ParentRoute>
 
                 // Student Mode: The Journey (Immersive learning experience)
+                <Route path=path!("/dashboard") view=crate::pages::student_dashboard::StudentDashboard/>
                 <Route path=path!("/journey/:quest_id") view=EngineCabLayout/>
+                <Route path=path!("/character-creation") view=crate::pages::character_creation::CharacterCreationPage/> // [NEW]
 
                 // === LEGACY ROUTES (Backward Compatibility) ===
                 <Route path=path!("/") view=AskPete/>

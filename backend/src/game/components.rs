@@ -123,6 +123,7 @@ pub struct ResearchLog {
 }
 
 #[derive(Reflect, Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[reflect(Serialize, Deserialize)]
 pub struct ResearchEvent {
     pub timestamp: f64,     // Seconds since start
     pub event_type: String, // e.g., "DECISION", "VIRTUE_UPDATE"
@@ -207,3 +208,19 @@ pub struct PeteCommandInbox(pub Arc<RwLock<Vec<AskPeteEvent>>>);
 
 #[derive(Resource, Clone)]
 pub struct PeteResponseOutbox(pub Arc<RwLock<Vec<PeteResponseEvent>>>);
+
+// --- Multiplayer / Campaign Components ---
+
+#[derive(Resource, Clone)]
+pub struct SharedCampaignStateResource(
+    pub Arc<RwLock<crate::game::multiplayer_client::CampaignState>>,
+);
+
+#[derive(Event, Debug, Clone)]
+pub struct VoteEvent {
+    pub campaign_id: String,
+    pub option_index: usize,
+}
+
+#[derive(Resource, Clone)]
+pub struct VoteInbox(pub Arc<RwLock<Vec<VoteEvent>>>);

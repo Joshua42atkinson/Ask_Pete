@@ -1,7 +1,8 @@
 use crate::ai::conversation_memory::ConversationMemory;
 use crate::ai::socratic_engine::SocraticEngine;
 use crate::game::components::{
-    PeteCommandInbox, PeteResponseOutbox, ResearchLog, SharedPhysicsResource, VirtueTopology,
+    PeteCommandInbox, PeteResponseOutbox, ResearchLog, SharedCampaignStateResource,
+    SharedPhysicsResource, VirtueTopology, VoteInbox,
 };
 use leptos::config::LeptosOptions;
 use sqlx::PgPool;
@@ -23,6 +24,8 @@ pub struct AppState {
     pub shared_physics: SharedPhysicsResource,
     pub weigh_station:
         Option<Arc<tokio::sync::Mutex<crate::handlers::weigh_station::WeighStation>>>,
+    pub shared_campaign_state: SharedCampaignStateResource, // [NEW]
+    pub vote_inbox: VoteInbox,                              // [NEW]
 }
 
 impl axum::extract::FromRef<AppState> for LeptosOptions {

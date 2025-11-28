@@ -6,4 +6,5 @@ pub mod game;
 pub mod models;
 pub mod pages;
 pub mod server_functions;
+pub mod theme;
 pub mod ui_theme;

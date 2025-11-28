@@ -21,9 +21,12 @@ pub struct SessionContext {
     pub focus_area: Option<String>,
 }
 
+use tokio::sync::Mutex;
+
 /// Main Socratic dialogue engine
 pub struct SocraticEngine {
     gemini_client: Option<crate::ai::llm::gemini_client::GeminiClient>,
+    gemma_model: Option<Arc<Mutex<crate::ai::llm::GemmaModel>>>,
     antigravity_client: Option<crate::antigravity::AntigravityClient>,
     memory: Arc<ConversationMemory>,
 }
@@ -33,6 +36,7 @@ impl SocraticEngine {
     pub fn new(memory: Arc<ConversationMemory>) -> Self {
         Self {
             gemini_client: None,
+            gemma_model: None,
             antigravity_client: None,
             memory,
         }
@@ -48,6 +52,12 @@ impl SocraticEngine {
     pub fn set_antigravity_client(&mut self, client: crate::antigravity::AntigravityClient) {
         self.antigravity_client = Some(client);
         log::info!("Antigravity client connected to Socratic engine");
+    }
+
+    /// Set the local Gemma model
+    pub fn set_gemma_model(&mut self, model: Arc<Mutex<crate::ai::llm::GemmaModel>>) {
+        self.gemma_model = Some(model);
+        log::info!("Local Gemma model connected to Socratic engine");
     }
 
     /// Generate a Socratic response to user input
@@ -87,7 +97,24 @@ impl SocraticEngine {
         log::debug!("Built prompt: {} chars", prompt.len());
 
         // 5. Generate response using LLM
-        let response_text = if let Some(ref mut gemini_client) = self.gemini_client {
+        let response_text = if let Some(ref model) = self.gemma_model {
+            // Use local Gemma model
+            let mut llm = model.lock().await;
+            // TODO: Pass proper config
+            let config = crate::ai::llm::GenerationConfig {
+                max_tokens: 1024,
+                temperature: 0.7,
+                top_p: 0.9,
+                repeat_penalty: 1.1,
+            };
+            match llm.generate(&prompt, config) {
+                Ok(text) => text,
+                Err(e) => {
+                    log::error!("Gemma generation failed: {}", e);
+                    "I'm having trouble accessing my local memory banks.".to_string()
+                }
+            }
+        } else if let Some(ref mut gemini_client) = self.gemini_client {
             // Actual inference using Gemini
             match gemini_client.generate(&prompt).await {
                 Ok(text) => text,

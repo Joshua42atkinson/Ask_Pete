@@ -37,7 +37,8 @@ use crate::ai::llm::gemma_engine::{GemmaConfigWrapper, GemmaModel}; // Enabled
 use crate::handlers::weigh_station::WeighStation; // [NEW] // [NEW] - Enabled
 
 use crate::game::components::*;
-use crate::game::systems::*;
+use crate::game::multiplayer_client::MultiplayerPlugin;
+use crate::game::systems::*; // [NEW]
 
 use bevy_yarnspinner::prelude::*;
 
@@ -51,12 +52,15 @@ fn run_bevy_app(
     download_state: SharedDownloadStateResource,
     pete_command_inbox: PeteCommandInbox,
     pete_response_outbox: PeteResponseOutbox,
+    shared_campaign_state: SharedCampaignStateResource, // [NEW]
+    vote_inbox: VoteInbox,                              // [NEW]
 ) {
     let mut app = BevyApp::new();
     app.add_plugins(MinimalPlugins);
     app.add_plugins(bevy::asset::AssetPlugin::default());
     app.add_plugins(bevy::audio::AudioPlugin::default());
     app.add_plugins(YarnSpinnerPlugin::new());
+    app.add_plugins(MultiplayerPlugin); // [NEW]
 
     // Register Events
     app.add_event::<PlayWhistleEvent>();
@@ -73,6 +77,8 @@ fn run_bevy_app(
     app.insert_resource(download_state);
     app.insert_resource(pete_command_inbox.clone());
     app.insert_resource(pete_response_outbox.clone());
+    app.insert_resource(shared_campaign_state); // [NEW]
+    app.insert_resource(vote_inbox); // [NEW]
 
     // Register Systems
     app.add_systems(
@@ -90,7 +96,9 @@ fn run_bevy_app(
             calculate_train_velocity,
             sync_pete_bridge,
             track_student_miles,
-            sync_physics_to_shared, // [NEW]
+            sync_physics_to_shared,  // [NEW]
+            sync_campaign_to_shared, // [NEW]
+            sync_vote_inbox,         // [NEW]
         ),
     );
 
@@ -182,6 +190,12 @@ async fn main() {
     // Initialize Shared Physics Resource
     let shared_physics = SharedPhysicsResource(Arc::new(RwLock::new(PhysicsState::default())));
 
+    // Initialize Multiplayer Resources
+    let shared_campaign_state = SharedCampaignStateResource(Arc::new(RwLock::new(
+        crate::game::multiplayer_client::CampaignState::default(),
+    )));
+    let vote_inbox = VoteInbox(Arc::new(RwLock::new(Vec::new())));
+
     let log_clone = shared_research_log.clone();
     let virtues_clone = shared_virtues.clone();
     let inbox_clone = download_inbox.clone();
@@ -189,6 +203,8 @@ async fn main() {
     let pete_inbox_clone = pete_command_inbox.clone();
     let pete_outbox_clone = pete_response_outbox.clone();
     let physics_clone = shared_physics.clone(); // [NEW]
+    let campaign_clone = shared_campaign_state.clone();
+    let vote_inbox_clone = vote_inbox.clone();
 
     thread::spawn(move || {
         run_bevy_app(
@@ -199,6 +215,8 @@ async fn main() {
             state_clone,
             pete_inbox_clone,
             pete_outbox_clone,
+            campaign_clone,
+            vote_inbox_clone,
         )
     });
 
@@ -232,6 +250,20 @@ async fn main() {
     let gemini_config = crate::ai::llm::gemini_client::GeminiConfig::default();
     let gemini_client = crate::ai::llm::gemini_client::GeminiClient::new(gemini_config);
 
+    // Initialize Shared Gemma Model (Local AI)
+    println!("Loading Gemma 3 Model...");
+    let gemma_config = GemmaConfigWrapper::default();
+    let shared_gemma_model = match GemmaModel::load(gemma_config) {
+        Ok(model) => {
+            println!("✅ Gemma 3 Model Loaded Successfully.");
+            Some(Arc::new(tokio::sync::Mutex::new(model)))
+        }
+        Err(e) => {
+            println!("⚠️ Failed to load Gemma 3 model: {}", e);
+            None
+        }
+    };
+
     // Initialize AI Mirror components
     let conversation_memory = Arc::new(match pool.as_ref() {
         Some(p) => ConversationMemory::new(p.clone(), 100),
@@ -247,6 +279,11 @@ async fn main() {
     // Initialize Antigravity Client (Enterprise Bridge)
     let antigravity_client = crate::antigravity::AntigravityClient::new();
     socratic_engine_instance.set_antigravity_client(antigravity_client);
+
+    // Pass shared Gemma model to Socratic Engine
+    if let Some(ref model) = shared_gemma_model {
+        socratic_engine_instance.set_gemma_model(model.clone());
+    }
 
     let socratic_engine = Arc::new(tokio::sync::RwLock::new(socratic_engine_instance));
 
@@ -278,29 +315,21 @@ async fn main() {
         crate::services::pete::PeteAssistant::new().expect("Failed to initialize PeteAssistant"),
     );
 
-    // Initialize Weigh Station
-    println!("Loading Gemma 3 Model for Weigh Station...");
-    let gemma_config = GemmaConfigWrapper::default();
-    let weigh_station = match GemmaModel::load(gemma_config) {
-        Ok(gemma_model) => {
-            println!("✅ Gemma 3 Model Loaded Successfully.");
-            if let Some(db_pool) = pool.clone() {
-                Some(Arc::new(tokio::sync::Mutex::new(WeighStation::new(
-                    db_pool,
-                    gemma_model,
-                ))))
-            } else {
-                println!("⚠️ Database not available, Weigh Station disabled.");
-                None
-            }
-        }
-        Err(e) => {
-            println!(
-                "⚠️ Failed to load Gemma 3 model: {}. Weigh Station disabled.",
-                e
-            );
+    // Initialize Weigh Station & Shared Gemma Model
+
+    let weigh_station = if let Some(ref model) = shared_gemma_model {
+        if let Some(db_pool) = pool.clone() {
+            Some(Arc::new(tokio::sync::Mutex::new(WeighStation::new(
+                db_pool,
+                model.clone(),
+            ))))
+        } else {
+            println!("⚠️ Database not available, Weigh Station disabled.");
             None
         }
+    } else {
+        println!("⚠️ Gemma 3 model not available, Weigh Station disabled.");
+        None
     };
 
     // Create the application state
@@ -314,10 +343,12 @@ async fn main() {
         socratic_engine,
         model_manager,
         pete_assistant,
-        pete_command_inbox,   // [NEW]
-        pete_response_outbox, // [NEW]
-        shared_physics,       // [NEW]
-        weigh_station,        // Enabled
+        pete_command_inbox,    // [NEW]
+        pete_response_outbox,  // [NEW]
+        shared_physics,        // [NEW]
+        weigh_station,         // Enabled
+        shared_campaign_state, // [NEW]
+        vote_inbox,            // [NEW]
     };
 
     // Create Model App State
@@ -347,6 +378,8 @@ async fn main() {
         // .merge(crate::routes::debug::debug_routes())
         .merge(crate::routes::knowledge::knowledge_routes())
         .nest("/api/weigh_station", weigh_station_routes()) // [NEW] - Enabled
+        .merge(crate::routes::scenarios::scenarios_routes(&app_state)) // [NEW]
+        .merge(crate::routes::campaign_routes::campaign_routes()) // [NEW]
         .layer(cors)
         .with_state(app_state) // Apply state BEFORE fallback
         .fallback(static_handler); // Fallback LAST so it doesn't catch API routes

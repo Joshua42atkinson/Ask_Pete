@@ -1,4 +1,5 @@
 pub mod ai_mirror;
+pub mod campaign;
 pub mod expert;
 pub mod knowledge;
 pub mod persona;
@@ -7,4 +8,4 @@ pub mod recharge;
 pub mod research;
 pub mod simulation;
 pub mod telemetry;
-pub mod weigh_station;
+pub mod weigh_station; // [NEW]

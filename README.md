@@ -22,9 +22,12 @@
 ### Key Features
 
 - ✅ **Hybrid Sovereign AI**: **Gemma 3** (Local) for privacy + **Gemini 3 Ultra** (Cloud) for reasoning.
+- ✅ **Cooperative Campaign Mode**: Multiplayer state synchronization allows classes to journey together.
+- ✅ **MMO Party System**: Distinct roles (Engineer, Conductor, Stoker, Signalman) with unique "Class Colors" and responsibilities.
 - ✅ **The Coal Economy**: "Compute Token Scarcity" teaches resource management.
 - ✅ **The Weigh Station**: AI analyzes vocabulary words and assigns "Cognitive Weight" (1-100).
 - ✅ **The Sandbox**: A GameLit RPG environment where students "burn Coal" to generate "Steam" (Mastery).
+- 🚧 **AI Curriculum Architect**: "The Blueprint Station" where AI generates story-driven curriculum maps.
 - ✅ **Open Source**: Apache 2.0 Licensed. Owned by the community, for the community.
 
 ---

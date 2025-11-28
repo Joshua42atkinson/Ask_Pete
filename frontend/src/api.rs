@@ -1,7 +1,33 @@
 use leptos::prelude::ServerFnError;
 use leptos::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use uuid::Uuid;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+pub enum PartyStyle {
+    #[default]
+    IronHorse, // Speed/Efficiency
+    ScenicRoute, // Exploration/Lore
+    NightTrain,  // Hardcore/Challenge
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+pub enum MemberRole {
+    #[default]
+    Engineer, // DPS / Warrior
+    Conductor, // Tank / Leader
+    Stoker,    // Healer / Support
+    Signalman, // CC / Mage
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CharacterProfile {
+    pub name: String,
+    pub role: MemberRole,
+    pub archetype: String,
+    pub level: u32,
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ReflectionData {
@@ -169,4 +195,80 @@ pub async fn get_download_progress() -> Result<DownloadProgress, String> {
     } else {
         Err(format!("Failed to fetch progress: {}", res.status()))
     }
+}
+
+// --- Multiplayer Campaign API ---
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct CampaignState {
+    pub campaign_id: String,
+    pub style: PartyStyle, // [NEW]
+    pub current_station_id: String,
+    pub party_members: HashMap<String, CharacterProfile>, // [MODIFIED]
+    pub collective_coal: u32,
+    pub collective_steam: u32,
+    pub active_vote: Option<VoteParams>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct VoteParams {
+    pub question: String,
+    pub options: Vec<String>,
+    pub deadline: u64,
+    pub current_tally: Vec<u32>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct VoteRequest {
+    pub campaign_id: String,
+    pub option_index: usize,
+}
+
+pub async fn fetch_campaign_state() -> Result<CampaignState, String> {
+    let res = gloo_net::http::Request::get("http://localhost:3000/api/campaign/state")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if res.ok() {
+        let state: CampaignState = res.json().await.map_err(|e| e.to_string())?;
+        Ok(state)
+    } else {
+        Err(format!("Failed to fetch campaign state: {}", res.status()))
+    }
+}
+
+pub async fn submit_vote(campaign_id: String, option_index: usize) -> Result<(), String> {
+    let req = VoteRequest {
+        campaign_id,
+        option_index,
+    };
+    let res = gloo_net::http::Request::post("http://localhost:3000/api/campaign/vote")
+        .json(&req)
+        .map_err(|e| e.to_string())?
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if res.ok() {
+        Ok(())
+    } else {
+        Err(format!("Failed to submit vote: {}", res.status()))
+    }
+}
+
+// --- Character Creation API ---
+
+#[derive(Debug, Serialize)]
+pub struct CreateCharacterRequest {
+    pub name: String,
+    pub role: MemberRole,
+    pub archetype: String,
+}
+
+pub async fn create_character(req: CreateCharacterRequest) -> Result<(), String> {
+    // In a real app, this would POST to /api/character/create
+    // For now, we'll just log it to console as a mock
+    gloo_console::info!(format!("Creating character: {:?}", req));
+    Ok(())
 }
