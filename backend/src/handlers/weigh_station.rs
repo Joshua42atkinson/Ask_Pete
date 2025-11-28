@@ -1,4 +1,4 @@
-use crate::ai::llm::{GemmaModel, GenerationConfig};
+use crate::ai::local_inference::{GemmaModel, GenerationConfig};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -21,14 +21,14 @@ use crate::ai::memory::{Document, VectorStore}; // [NEW]
 
 pub struct WeighStation {
     db: PgPool,
-    llm: Arc<Mutex<GemmaModel>>,
+    llm: GemmaModel,
     memory: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW]
 }
 
 impl WeighStation {
     pub fn new(
         db: PgPool,
-        llm: Arc<Mutex<GemmaModel>>,
+        llm: GemmaModel,
         memory: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW]
     ) -> Self {
         Self { db, llm, memory }
@@ -68,8 +68,7 @@ impl WeighStation {
             ..Default::default()
         };
 
-        let mut llm = self.llm.lock().await;
-        let json_response = llm.generate(&prompt, config)?;
+        let json_response = self.llm.generate(prompt, config).await?;
 
         // 3. Parse the Physics
         // Clean markdown code blocks if present
