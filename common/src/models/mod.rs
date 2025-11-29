@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-pub mod triggers;
+pub mod literary_device;
+pub mod triggers; // [NEW]
 
 /// Represents a "Lesson" or "Node" in the curriculum.
 /// Metaphor: A car added to the train.

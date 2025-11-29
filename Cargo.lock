@@ -358,6 +358,117 @@ dependencies = [
 ]
 
 [[package]]
+name = "ask_pete_player"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "byteorder",
+ "candle-core",
+ "candle-nn",
+ "candle-transformers",
+ "chrono",
+ "common",
+ "console_error_panic_hook",
+ "console_log",
+ "getrandom 0.2.16",
+ "gloo-console",
+ "gloo-net 0.5.0",
+ "gloo-timers",
+ "half",
+ "js-sys",
+ "leptos",
+ "leptos_axum",
+ "leptos_meta",
+ "leptos_router",
+ "log",
+ "rand 0.8.5",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "uuid 1.13.1",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "ask_pete_researcher"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "byteorder",
+ "candle-core",
+ "candle-nn",
+ "candle-transformers",
+ "chrono",
+ "common",
+ "console_error_panic_hook",
+ "console_log",
+ "getrandom 0.2.16",
+ "gloo-console",
+ "gloo-net 0.5.0",
+ "gloo-timers",
+ "half",
+ "js-sys",
+ "leptos",
+ "leptos_axum",
+ "leptos_meta",
+ "leptos_router",
+ "log",
+ "rand 0.8.5",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "uuid 1.13.1",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "ask_pete_teacher"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.7.9",
+ "byteorder",
+ "candle-core",
+ "candle-nn",
+ "candle-transformers",
+ "chrono",
+ "common",
+ "console_error_panic_hook",
+ "console_log",
+ "getrandom 0.2.16",
+ "gloo-console",
+ "gloo-net 0.5.0",
+ "gloo-timers",
+ "half",
+ "js-sys",
+ "leptos",
+ "leptos_axum",
+ "leptos_meta",
+ "leptos_router",
+ "log",
+ "rand 0.8.5",
+ "reqwest 0.12.24",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "uuid 1.13.1",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
 name = "async-broadcast"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1852,6 +1963,10 @@ dependencies = [
  "libc",
  "libloading 0.8.9",
 ]
+
+[[package]]
+name = "client_shared"
+version = "0.1.0"
 
 [[package]]
 name = "codee"

@@ -63,7 +63,11 @@ impl CurriculumArchitect {
                             "complexity_level": 1,
                             "learner_profiles": [],
                             "gardens_active": [],
-                            "required_stats": {{}}
+                            "required_stats": {{}},
+                            "logic": {{
+                                "condition": "None", 
+                                "effect": "None"
+                            }}
                         }}
                     ],
                     "connections": [
@@ -84,6 +88,10 @@ impl CurriculumArchitect {
             4. Adjust 'complexity_level' based on the progression.
             5. Use the terminology from the LORE (Sectors, Chassis, etc.) in the node titles and content where appropriate.
             6. TREAT WORDS AS SYMBOLS OF POWER. In the Iron Network, knowing the definition of a word (like 'Velocity') is not just academic—it grants control over the environment (e.g., opening doors, powering engines).
+            7. **IMPORTANT**: Use the 'logic' field to create interactive elements.
+               - 'condition': "None", "GreaterThan {{ variable: 'Strength', value: 10.0 }}", "HasItem {{ item_id: 'Key' }}"
+               - 'effect': "None", "ModifyVariable {{ variable: 'Strength', delta: 5.0 }}", "GrantItem {{ item_id: 'Key' }}"
+               - Example: A node that requires 'Strength' > 5 to enter, or a node that grants a 'Key' upon visit.
             "#,
             lore_context = crate::ai::lore::get_lore_context(),
             subject = req.subject,
@@ -114,7 +122,7 @@ impl CurriculumArchitect {
     }
 }
 
-fn extract_json(text: &str) -> Option<String> {
+pub fn extract_json(text: &str) -> Option<String> {
     // Simple helper to strip markdown code blocks if present
     if let Some(start) = text.find("```json") {
         if let Some(end) = text[start..].find("```") {
