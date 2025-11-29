@@ -239,20 +239,51 @@ pub fn progress_update_system(
 
 // [NEW] Physics System: Calculate Train Velocity based on Mass and Power
 pub fn calculate_train_velocity(
-    mut query: Query<(&mut TrainVelocity, &Mass, &EnginePower, &mut CognitiveLoad)>,
+    mut query: Query<(
+        &mut TrainVelocity,
+        &Mass,
+        &EnginePower,
+        &mut CognitiveLoad,
+        &mut Coal,
+    )>,
+    time: Res<Time>,
 ) {
-    for (mut velocity, mass, power, mut load) in query.iter_mut() {
+    for (mut velocity, mass, power, mut load, mut coal) in query.iter_mut() {
         // Physics: Velocity = Power / Mass
         // Ensure mass is at least 1.0 to avoid division by zero
         let effective_mass = mass.0.max(1.0);
-        velocity.0 = power.0 / effective_mass;
+
+        // [NEW] Coal Consumption Logic
+        // Burning coal generates power. No coal = No power.
+        let burn_rate = 0.1 * time.delta_seconds(); // Simple burn rate
+
+        if coal.0 > 0.0 {
+            coal.0 = (coal.0 - burn_rate).max(0.0);
+            velocity.0 = power.0 / effective_mass;
+        } else {
+            // Out of fuel!
+            velocity.0 = 0.0;
+            // Increase extraneous load significantly (Panic/Stall)
+            load.extraneous = (load.extraneous + 0.05 * time.delta_seconds()).min(1.0);
+        }
 
         // Pedagogical Link: If Velocity drops below threshold, increase Extraneous Load
         // This simulates "The Drag" of too much content
-        if velocity.0 < 5.0 {
+        if velocity.0 < 5.0 && coal.0 > 0.0 {
             // Arbitrary threshold for "slow"
             // Increase extraneous load slightly
             load.extraneous = (load.extraneous + 0.001).min(1.0);
+        }
+    }
+}
+
+// [NEW] System to generate Steam from work done
+pub fn generate_steam(mut query: Query<(&TrainVelocity, &mut Steam)>, time: Res<Time>) {
+    for (velocity, mut steam) in query.iter_mut() {
+        // Work = Force * Distance. Here we simplify: Steam = Velocity * Time * Efficiency factor
+        if velocity.0 > 0.0 {
+            let steam_generated = velocity.0 * time.delta_seconds() * 0.1;
+            steam.0 += steam_generated;
         }
     }
 }

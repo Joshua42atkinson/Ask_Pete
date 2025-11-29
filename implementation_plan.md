@@ -1,59 +1,60 @@
-# Implementation Plan - Hybrid Sovereign Architecture
+# Implementation Plan - The Iron Network (Sector HSI)
 
 ## Goal
 
-Transform "Ask Pete" into a "Hybrid Sovereign" platform by integrating Google's Gemma 3 for local inference and Antigravity for enterprise-grade scaling, while implementing the "Coal" (Compute) & "Steam" (Mastery) economic model.
+Elevate the "Authoring Tool" from a simple graph editor to a **"Human Systems Integration" (HSI)** platform. We will implement the **"O.W.L. Diagnostic"** (Instructional Design Optimizer) and deepen the **"Foundry"** (Node Canvas) visuals to reflect the "Iron Network" lore (Steam, Pressure, Torque).
 
 ## User Review Required
 >
 > [!IMPORTANT]
-> **Gemma 3 Integration**: We are replacing the generic Llama implementation with Gemma 3. This requires verifying that `candle-transformers` supports the specific Gemma 3 architecture (or using a compatible fallback like Gemma 2 until explicit support is confirmed).
-> **Compute Token Scarcity**: We are introducing "Coal" as a consumable resource for AI inference. This is a significant gameplay change.
+> **The O.W.L. Protocol**: We are adding a "Diagnostic" button that analyzes node content. Currently, this will be a heuristic check (word count, active voice proxies), but it sets the stage for AI analysis.
+> **Terminology Shift**: "Cognitive Load" -> "Boiler Pressure". "Connections" -> "Tracks". "Nodes" -> "Stations".
 
 ## Proposed Changes
 
-### Phase 1: Gemma 3 Core (Local Sovereignty)
+### Phase 1: Sector HSI (Instructional Design Tools)
 
-#### [MODIFY] [backend/Cargo.toml](file:///backend/Cargo.toml)
+#### [NEW] [frontend/src/components/authoring/owl_diagnostic.rs](file:///frontend/src/components/authoring/owl_diagnostic.rs)
 
-- Ensure `candle-transformers` and `hf-hub` are configured for Gemma 3.
-- Add `burn` or specific `ort` features if needed for optimized inference.
+- **The O.W.L. Node**: A floating panel or modal that runs "Diagnostics" on the graph.
+- **Functionality**:
+  - **Torque Check**: Analyzes text length and keyword density (proxy for "Active Voice").
+  - **Friction Check**: Identifies nodes with too many connections (> 4) or "Scale Buildup" (too much text).
+  - **Signal-to-Noise**: Highlights nodes with empty content.
 
-#### [MODIFY] [backend/src/ai/llm/mod.rs](file:///backend/src/ai/llm/mod.rs)
+#### [MODIFY] [frontend/src/components/authoring/node_canvas.rs](file:///frontend/src/components/authoring/node_canvas.rs)
 
-- Refactor `LLMEngine` trait to support Gemma 3 specific tokenization and generation parameters.
+- **Integration**: Add the "O.W.L. Diagnostic" button to the toolbar (The Foundry Control Panel).
+- **Visuals**: Update the background and UI chrome to match "The Foundry" (Sector 0) aesthetic more closely.
 
-#### [NEW] [backend/src/ai/llm/gemma_engine.rs](file:///backend/src/ai/llm/gemma_engine.rs)
+### Phase 2: The Foundry (Visuals & Mechanics)
 
-- Implement `GemmaEngine` struct using `candle`.
-- Handle model download (2B/7B quantized) via `hf-hub`.
-- Implement "Coal" cost calculation per token.
+#### [MODIFY] [frontend/src/components/authoring/story_node.rs](file:///frontend/src/components/authoring/story_node.rs)
 
-#### [MODIFY] [frontend/src/ai/gemma_agent.rs](file:///frontend/src/ai/gemma_agent.rs)
+- **Boiler Pressure**: Rename "Cognitive Load" to "Boiler Pressure".
+- **Visual Feedback**:
+  - **Green**: "Optimal Pressure" (Safe).
+  - **Yellow**: "High Pressure" (Warning).
+  - **Red**: "Rupture Risk" (Overload).
+- **Scale Buildup**: Add a subtle texture overlay to nodes that are "stale" or "heavy".
 
-- Implement WebGPU-based inference for Gemma 3 (270M/2B) in the browser.
-- Use `wgpu` and `candle-wasm` for zero-latency, offline capability.
+#### [MODIFY] [common/src/models/triggers.rs](file:///common/src/models/triggers.rs)
 
-### Phase 2: Antigravity Bridge (Enterprise Scale)
-
-#### [NEW] [backend/src/antigravity/mod.rs](file:///backend/src/antigravity/mod.rs)
-
-- Create the `AntigravityClient` to communicate with the enterprise backend.
-- Implement "Steam" synchronization (uploading verified progress vectors).
-
-#### [MODIFY] [backend/src/handlers/weigh_station.rs](file:///backend/src/handlers/weigh_station.rs)
-
-- Update `WeighStation` to act as the gateway between Local (Gemma) and Cloud (Antigravity).
+- **Signal Logic**: Ensure triggers are conceptually aligned with "Railway Signals" (Green/Red lights).
 
 ## Verification Plan
 
 ### Automated Tests
 
-- `cargo test` for `GemmaEngine` tokenization and generation.
-- Unit tests for "Coal" deduction logic.
+- `cargo test` for the new `owl_diagnostic` logic (if extracted to common/utils).
 
 ### Manual Verification
 
-- **Local Inference**: Verify Gemma 3 runs on the student laptop (backend) and browser (frontend) without crashing.
-- **Economic Loop**: Confirm that asking Pete a question consumes "Coal" and answering correctly generates "Steam".
-- **Cloud Sync**: Verify that "Steam" generated locally appears in the Antigravity dashboard (mocked if necessary).
+- **The O.W.L.**:
+    1. Open the Authoring Tool.
+    2. Create a node with very little text ("Low Torque").
+    3. Click "Run O.W.L. Diagnostic".
+    4. Verify the node is highlighted/flagged.
+- **Boiler Pressure**:
+    1. Add > 4 connections to a node.
+    2. Verify the "Pressure Gauge" (Passenger Count) turns Red.

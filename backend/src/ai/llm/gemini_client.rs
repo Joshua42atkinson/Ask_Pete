@@ -27,7 +27,8 @@ impl Default for GeminiConfig {
 #[derive(Serialize)]
 struct GeminiRequest {
     contents: Vec<Content>,
-    generationConfig: GenerationConfig,
+    #[serde(rename = "generationConfig")]
+    generation_config: GenerationConfig,
 }
 
 #[derive(Serialize)]
@@ -42,7 +43,8 @@ struct Part {
 
 #[derive(Serialize)]
 struct GenerationConfig {
-    maxOutputTokens: usize,
+    #[serde(rename = "maxOutputTokens")]
+    max_output_tokens: usize,
     temperature: f32,
 }
 
@@ -56,7 +58,8 @@ struct GeminiResponse {
 #[derive(Deserialize)]
 struct Candidate {
     content: ContentResponse,
-    finishReason: Option<String>,
+    #[serde(rename = "finishReason")]
+    finish_reason: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -126,8 +129,8 @@ impl GeminiClient {
                     text: prompt.to_string(),
                 }],
             }],
-            generationConfig: GenerationConfig {
-                maxOutputTokens: self.config.max_tokens,
+            generation_config: GenerationConfig {
+                max_output_tokens: self.config.max_tokens,
                 temperature: self.config.temperature,
             },
         };

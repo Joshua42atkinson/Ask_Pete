@@ -98,9 +98,10 @@ fn run_bevy_app(
             calculate_train_velocity,
             sync_pete_bridge,
             track_student_miles,
-            sync_physics_to_shared,  // [NEW]
-            sync_campaign_to_shared, // [NEW]
-            sync_vote_inbox,         // [NEW]
+            sync_physics_to_shared,
+            sync_campaign_to_shared,
+            sync_vote_inbox,
+            generate_steam, // [NEW]
         ),
     );
 
@@ -129,7 +130,14 @@ fn run_bevy_app(
         mass: Mass(10.0),                 // Default mass (Cargo Weight)
         engine_power: EnginePower(100.0), // Default power (Willpower)
         velocity: TrainVelocity(0.0),     // Starts stationary
-        miles: StudentMiles::default(),   // [NEW]
+        miles: StudentMiles::default(),
+        coal: Coal(100.0), // [NEW] Full tank
+        steam: Steam(0.0), // [NEW] No pressure yet
+        location: Location {
+            // [NEW] Default to Purdue Engineering Fountain
+            latitude: 40.4282,
+            longitude: -86.9144,
+        },
         level: Level(1),
         xp: Experience(0),
     });
@@ -335,7 +343,7 @@ async fn main() {
             Some(Arc::new(tokio::sync::Mutex::new(WeighStation::new(
                 db_pool,
                 model.clone(),
-                memory_store.clone(), // [NEW]
+                // memory_store.clone(), // [NEW]
             ))))
         } else {
             println!("⚠️ Database not available, Weigh Station disabled.");
@@ -363,7 +371,7 @@ async fn main() {
         weigh_station,         // Enabled
         shared_campaign_state, // [NEW]
         vote_inbox,            // [NEW]
-        memory_store,          // [NEW]
+                               // memory_store,          // [NEW]
     };
 
     // Create Model App State

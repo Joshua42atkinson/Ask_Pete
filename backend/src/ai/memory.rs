@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 // use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
-use lancedb::{connect, Table}; // Removed TableRef and arrow imports for now
+// use lancedb::{connect, Table}; // Removed TableRef and arrow imports for now
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex}; // Added Mutex for interior mutability
 
@@ -19,7 +19,7 @@ pub trait VectorStore: Send + Sync {
 }
 
 pub struct LanceDbConnection {
-    conn: lancedb::Connection,
+    // conn: lancedb::Connection,
     // embedding_model: Mutex<TextEmbedding>, // Wrap in Mutex because embed needs &mut self
     table_name: String,
 }
@@ -35,11 +35,11 @@ impl LanceDbConnection {
         let model = TextEmbedding::try_new(options)?;
         */
 
-        let uri = format!("data/{}", db_path);
-        let conn = connect(&uri).execute().await?;
+        let _uri = format!("data/{}", db_path);
+        // let conn = connect(&uri).execute().await?;
 
         Ok(Self {
-            conn,
+            // conn,
             // embedding_model: Mutex::new(model),
             table_name: "memory_bank".to_string(),
         })

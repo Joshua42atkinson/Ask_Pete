@@ -1,0 +1,234 @@
+﻿cargo :    Compiling 
+bevy_reflect v0.14.2
+At line:1 char:1
++ cargo run 2>&1 | 
+Out-File -Encoding 
+utf8 run_output.txt
++ ~~~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (   Comp   
+ iling bevy_refle    
+ct v0.14.2:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+   Compiling hyper 
+v0.14.32
+   Compiling 
+arrow-select v51.0.0
+   Compiling 
+arrow-row v51.0.0
+   Compiling 
+arrow-arith v51.0.0
+   Compiling js-sys 
+v0.3.83
+   Compiling hyper 
+v1.8.1
+   Compiling 
+naga_oil v0.14.0
+   Compiling 
+bevy_mikktspace 
+v0.14.2
+   Compiling 
+wgpu-hal v0.21.1
+   Compiling 
+hexasphere v12.0.0
+   Compiling 
+gemm-f32 v0.18.2
+   Compiling 
+lance-encoding 
+v0.10.18
+   Compiling 
+gemm-c64 v0.18.2
+   Compiling 
+gemm-f64 v0.18.2
+   Compiling 
+gemm-c32 v0.18.2
+   Compiling 
+lance-file v0.10.18
+   Compiling 
+sqlx-postgres v0.8.6
+   Compiling gemm 
+v0.17.1
+   Compiling 
+lance-table v0.10.18
+   Compiling 
+lance-index v0.10.18
+   Compiling console_
+error_panic_hook 
+v0.1.7
+error: failed to run 
+custom build command 
+for `lance-encoding 
+v0.10.18`
+
+Caused by:
+  process didn't 
+exit successfully: `C
+:\Users\Trinity\Docum
+ents\daydream\Day_Dre
+am\target\debug\build
+\lance-encoding-92b80
+85d1397bfaf\build-scr
+ipt-build` (exit 
+code: 1)
+  --- stdout
+  cargo:rerun-if-chan
+ged=protos
+
+  --- stderr
+  Error: Custom { 
+kind: NotFound, 
+error: "Could not 
+find `protoc`. If 
+`protoc` is 
+installed, try 
+setting the `PROTOC` 
+environment variable 
+to the path of the 
+`protoc` binary. Try 
+installing 
+`protobuf-compiler` 
+or `protobuf` using 
+your package 
+manager. It is also 
+available at https://
+github.com/protocolbu
+ffers/protobuf/releas
+es  For more 
+information: https://
+docs.rs/prost-build/#
+sourcing-protoc" }
+warning: build 
+failed, waiting for 
+other jobs to 
+finish...
+error: failed to run 
+custom build command 
+for `lance-file 
+v0.10.18`
+
+Caused by:
+  process didn't 
+exit successfully: `C
+:\Users\Trinity\Docum
+ents\daydream\Day_Dre
+am\target\debug\build
+\lance-file-96ed29b05
+02eb927\build-script-
+build` (exit code: 1)
+  --- stdout
+  cargo:rerun-if-chan
+ged=protos
+
+  --- stderr
+  Error: Custom { 
+kind: NotFound, 
+error: "Could not 
+find `protoc`. If 
+`protoc` is 
+installed, try 
+setting the `PROTOC` 
+environment variable 
+to the path of the 
+`protoc` binary. Try 
+installing 
+`protobuf-compiler` 
+or `protobuf` using 
+your package 
+manager. It is also 
+available at https://
+github.com/protocolbu
+ffers/protobuf/releas
+es  For more 
+information: https://
+docs.rs/prost-build/#
+sourcing-protoc" }
+error: failed to run 
+custom build command 
+for `lance-table 
+v0.10.18`
+
+Caused by:
+  process didn't 
+exit successfully: `C
+:\Users\Trinity\Docum
+ents\daydream\Day_Dre
+am\target\debug\build
+\lance-table-b862d222
+ef7a377a\build-script
+-build` (exit code: 
+1)
+  --- stdout
+  cargo:rerun-if-chan
+ged=protos
+
+  --- stderr
+  Error: Custom { 
+kind: NotFound, 
+error: "Could not 
+find `protoc`. If 
+`protoc` is 
+installed, try 
+setting the `PROTOC` 
+environment variable 
+to the path of the 
+`protoc` binary. Try 
+installing 
+`protobuf-compiler` 
+or `protobuf` using 
+your package 
+manager. It is also 
+available at https://
+github.com/protocolbu
+ffers/protobuf/releas
+es  For more 
+information: https://
+docs.rs/prost-build/#
+sourcing-protoc" }
+error: failed to run 
+custom build command 
+for `lance-index 
+v0.10.18`
+
+Caused by:
+  process didn't 
+exit successfully: `C
+:\Users\Trinity\Docum
+ents\daydream\Day_Dre
+am\target\debug\build
+\lance-index-a7850196
+40dbf07c\build-script
+-build` (exit code: 
+1)
+  --- stdout
+  cargo:rerun-if-chan
+ged=protos
+
+  --- stderr
+  Error: Custom { 
+kind: NotFound, 
+error: "Could not 
+find `protoc`. If 
+`protoc` is 
+installed, try 
+setting the `PROTOC` 
+environment variable 
+to the path of the 
+`protoc` binary. Try 
+installing 
+`protobuf-compiler` 
+or `protobuf` using 
+your package 
+manager. It is also 
+available at https://
+github.com/protocolbu
+ffers/protobuf/releas
+es  For more 
+information: https://
+docs.rs/prost-build/#
+sourcing-protoc" }

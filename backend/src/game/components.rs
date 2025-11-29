@@ -157,6 +157,23 @@ pub struct StudentMiles {
     pub total_miles: f32,
 }
 
+// [NEW] Economy Components
+#[derive(Component, Reflect, Default, Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[reflect(Component)]
+pub struct Coal(pub f32); // Fuel / Attention
+
+#[derive(Component, Reflect, Default, Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[reflect(Component)]
+pub struct Steam(pub f32); // Currency / Mastery
+
+// [NEW] Location Component
+#[derive(Component, Reflect, Default, Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[reflect(Component)]
+pub struct Location {
+    pub latitude: f64,
+    pub longitude: f64,
+}
+
 // The Bundle used to spawn a new student entity
 #[derive(Bundle)]
 pub struct StudentBundle {
@@ -168,7 +185,10 @@ pub struct StudentBundle {
     pub mass: Mass,
     pub engine_power: EnginePower,
     pub velocity: TrainVelocity,
-    pub miles: StudentMiles, // [NEW]
+    pub miles: StudentMiles,
+    pub coal: Coal,         // [NEW]
+    pub steam: Steam,       // [NEW]
+    pub location: Location, // [NEW]
     pub name: Name,
     pub level: Level,
     pub xp: Experience,

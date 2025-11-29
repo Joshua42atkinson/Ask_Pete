@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub mod triggers;
+
 /// Represents a "Lesson" or "Node" in the curriculum.
 /// Metaphor: A car added to the train.
 #[derive(Debug, Clone, Serialize, Deserialize)]

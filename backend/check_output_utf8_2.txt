@@ -1,0 +1,152 @@
+﻿cargo : warning: 
+unused import: `crate
+::pages::engine_cab_l
+ayout::EngineCabLayou
+t`
+At line:1 char:1
++ cargo check 2>&1 | 
+Out-File -Encoding 
+utf8 check_output_utf
+8_2.txt
++ ~~~~~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (warning   
+ : unused...ngine    
+CabLayout`:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+  --> frontend\src\ap
+p.rs:13:5
+   |
+13 | use crate::pages
+::engine_cab_layout::
+EngineCabLayout;
+   |     ^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(un
+used_imports)]` 
+(part of 
+`#[warn(unused)]`) 
+on by default
+
+warning: unused 
+import: `StoryNode`
+ --> frontend\src\pag
+es\play_mode.rs:2:34
+  |
+2 | use common::exper
+t::{StoryGraph, 
+StoryNode};
+  |                  
+                
+^^^^^^^^^
+
+warning: unused 
+variable: `history`
+  --> frontend\src\pa
+ges\play_mode.rs:19:1
+0
+   |
+19 |     let 
+(history, 
+set_history) = signal
+(Vec::<String>::new()
+); // Log of events
+   |          
+^^^^^^^ help: if 
+this is intentional, 
+prefix it with an 
+underscore: 
+`_history`
+   |
+   = note: `#[warn(un
+used_variables)]` 
+(part of 
+`#[warn(unused)]`) 
+on by default
+
+warning: 
+`ask_pete_frontend` 
+(lib) generated 3 
+warnings (run `cargo 
+fix --lib -p 
+ask_pete_frontend` 
+to apply 2 
+suggestions)
+warning: structure 
+field 
+`generationConfig` 
+should have a snake 
+case name
+  --> backend\src\ai\
+llm\gemini_client.rs:
+30:5
+   |
+30 |     
+generationConfig: 
+GenerationConfig,
+   |     
+^^^^^^^^^^^^^^^^ 
+help: convert the 
+identifier to snake 
+case: 
+`generation_config`
+   |
+   = note: `#[warn(no
+n_snake_case)]` 
+(part of `#[warn(nons
+tandard_style)]`) on 
+by default
+
+warning: structure 
+field 
+`maxOutputTokens` 
+should have a snake 
+case name
+  --> backend\src\ai\
+llm\gemini_client.rs:
+45:5
+   |
+45 |     
+maxOutputTokens: 
+usize,
+   |     
+^^^^^^^^^^^^^^^ 
+help: convert the 
+identifier to snake 
+case: 
+`max_output_tokens`
+
+warning: structure 
+field `finishReason` 
+should have a snake 
+case name
+  --> backend\src\ai\
+llm\gemini_client.rs:
+59:5
+   |
+59 |     
+finishReason: 
+Option<String>,
+   |     
+^^^^^^^^^^^^ help: 
+convert the 
+identifier to snake 
+case: `finish_reason`
+
+warning: 
+`ask_pete_backend` 
+(bin 
+"ask_pete_backend") 
+generated 3 warnings
+    Finished `dev` 
+profile [unoptimized 
++ debuginfo] 
+target(s) in 1.47s

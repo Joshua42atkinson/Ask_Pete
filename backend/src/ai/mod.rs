@@ -1,12 +1,11 @@
-pub mod conversation_memory;
-// pub mod embedding; // RAG embedding service
 pub mod architect;
+pub mod conversation_memory;
 pub mod llm;
-pub mod local_inference; // [NEW]
+pub mod local_inference;
+pub mod lore;
+pub mod memory;
 pub mod prompts;
-pub mod socratic_engine; // [NEW]
-pub mod memory; // [NEW]
+pub mod socratic_engine;
+pub mod vocabulary;
 
-#[cfg(test)]
-// mod tests;
 pub use socratic_engine::SessionContext;

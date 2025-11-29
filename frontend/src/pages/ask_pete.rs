@@ -57,6 +57,39 @@ pub fn AskPete() -> impl IntoView {
                             </p>
                         </div>
                     </ChamferedPanel>
+
+                    // Navigation Deck [NEW]
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                        <a href="/yard" class="group">
+                            <ChamferedPanel class="bg-industrial-surface border-2 border-purdue-gold/30 p-6 h-full hover:border-purdue-gold transition-colors cursor-pointer relative overflow-hidden">
+                                <div class="absolute inset-0 bg-purdue-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="text-2xl font-black text-steam-white group-hover:text-purdue-prime transition-colors">"The Foundry"</h3>
+                                    <span class="text-3xl">"⚒️"</span>
+                                </div>
+                                <p class="text-purdue-dust font-mono text-sm mb-4">"Authoring Tool & Graph Editor"</p>
+                                <div class="flex items-center text-purdue-gold font-bold uppercase tracking-wider text-sm">
+                                    <span>"Enter Yard"</span>
+                                    <span class="ml-2 transform group-hover:translate-x-1 transition-transform">"→"</span>
+                                </div>
+                            </ChamferedPanel>
+                        </a>
+
+                        <a href="/dashboard" class="group">
+                            <ChamferedPanel class="bg-industrial-surface border-2 border-purdue-gold/30 p-6 h-full hover:border-purdue-gold transition-colors cursor-pointer relative overflow-hidden">
+                                <div class="absolute inset-0 bg-purdue-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="text-2xl font-black text-steam-white group-hover:text-purdue-prime transition-colors">"The Line"</h3>
+                                    <span class="text-3xl">"🚂"</span>
+                                </div>
+                                <p class="text-purdue-dust font-mono text-sm mb-4">"Student Dashboard & Journey"</p>
+                                <div class="flex items-center text-purdue-gold font-bold uppercase tracking-wider text-sm">
+                                    <span>"View Schedule"</span>
+                                    <span class="ml-2 transform group-hover:translate-x-1 transition-transform">"→"</span>
+                                </div>
+                            </ChamferedPanel>
+                        </a>
+                    </div>
                 </div>
             </div>
 

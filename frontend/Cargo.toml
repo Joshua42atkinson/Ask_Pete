@@ -24,7 +24,8 @@ web-sys = { version = "0.3", features = [
     # WebGPU Support for Client-Side AI
     "console", "Window", "Performance", "Gpu", "GpuDevice", "GpuAdapter", "GpuQueue", 
     "GpuBuffer", "GpuCommandEncoder", "GpuComputePipeline", "GpuBindGroup", "GpuBindGroupLayout",
-    "GpuPipelineLayout", "GpuShaderModule", "Navigator", "Storage"
+    "GpuPipelineLayout", "GpuShaderModule", "Navigator", "Storage",
+    "Geolocation", "Position", "Coordinates", "PositionError", "PositionOptions"
 ] }
 console_error_panic_hook = "0.1"
 console_log = "1.0"

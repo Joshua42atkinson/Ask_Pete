@@ -23,6 +23,8 @@ pub async fn get_graph(State(app_state): State<AppState>) -> Result<Json<StoryGr
                     learner_profiles: vec![],
                     gardens_active: vec![],
                     required_stats: std::collections::HashMap::new(),
+                    logic: Default::default(),
+                    style: Default::default(),
                 }],
                 connections: vec![],
             };
