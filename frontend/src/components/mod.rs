@@ -10,6 +10,7 @@ pub mod formative_eval;
 pub mod fuel_gauge;
 pub mod getting_started_modal;
 pub mod glass_panel;
+pub mod gps_hud; // [NEW]
 pub mod help_panel;
 pub mod learner_analysis;
 pub mod loading_spinner;
@@ -23,6 +24,7 @@ pub mod systems_thinking;
 pub mod tech_analysis;
 pub mod tech_skills;
 pub mod theoretical_synthesis;
+pub mod toast;
 pub mod tooltip;
 pub mod tutorial_overlay;
 pub mod visual_design;

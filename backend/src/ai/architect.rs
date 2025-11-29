@@ -33,6 +33,9 @@ impl CurriculumArchitect {
             r#"
             You are the "Curriculum Architect", an expert instructional designer and storyteller.
             
+            CONTEXT & LORE:
+            {lore_context}
+
             GOAL: Create a non-linear learning path (StoryGraph) for the subject: "{subject}".
             
             CONSTRAINTS:
@@ -40,6 +43,9 @@ impl CurriculumArchitect {
             - Literary Device: "{device}".
             - Required Vocabulary: {vocab:?}.
             
+            NARRATIVE DEVICE INSTRUCTIONS:
+            {device_prompt}
+
             OUTPUT FORMAT:
             Return a JSON object matching this structure:
             {{
@@ -76,11 +82,23 @@ impl CurriculumArchitect {
             2. Ensure the graph branches (non-linear).
             3. Integrate the vocabulary words into the node content.
             4. Adjust 'complexity_level' based on the progression.
+            5. Use the terminology from the LORE (Sectors, Chassis, etc.) in the node titles and content where appropriate.
+            6. TREAT WORDS AS SYMBOLS OF POWER. In the Iron Network, knowing the definition of a word (like 'Velocity') is not just academic—it grants control over the environment (e.g., opening doors, powering engines).
             "#,
+            lore_context = crate::ai::lore::get_lore_context(),
             subject = req.subject,
             focus = req.focus,
             device = req.literary_device,
-            vocab = req.vocabulary
+            device_prompt = crate::ai::lore::get_device_prompt(&req.literary_device),
+            vocab = if req.vocabulary.is_empty() {
+                // Auto-inject physics vocabulary if none provided
+                crate::ai::vocabulary::get_physics_vocabulary()
+                    .into_iter()
+                    .map(|t| format!("{}: {}", t.word, t.definition))
+                    .collect::<Vec<String>>()
+            } else {
+                req.vocabulary
+            }
         );
 
         // 2. Call Gemini

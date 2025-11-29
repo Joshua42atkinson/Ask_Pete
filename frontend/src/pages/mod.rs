@@ -8,5 +8,7 @@ pub mod settings;
 pub mod character_creation;
 pub mod engine_cab_layout;
 pub mod knowledge_library;
+pub mod play_mode;
 pub mod student_dashboard;
 pub mod train_yard_layout; // [NEW]
+pub mod weigh_station; // [RESTORED]

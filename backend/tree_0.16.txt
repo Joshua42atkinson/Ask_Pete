@@ -1,0 +1,92 @@
+﻿bevy_app v0.16.1
+Γö£ΓöÇΓöÇ bevy_animation v0.16.1
+Γöé   ΓööΓöÇΓöÇ bevy_internal v0.16.1
+Γöé       ΓööΓöÇΓöÇ bevy v0.16.1
+Γöé           ΓööΓöÇΓöÇ bevy_defer v0.14.0
+Γöé               ΓööΓöÇΓöÇ ask_pete_backend v0.1.0 (C:\Users\Trinity\Documents\daydream\Day_Dream\backend)
+Γö£ΓöÇΓöÇ bevy_asset v0.16.1
+Γöé   Γö£ΓöÇΓöÇ bevy_animation v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_core_pipeline v0.16.1
+Γöé   Γöé   Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γöé   Γö£ΓöÇΓöÇ bevy_pbr v0.16.1
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γöé   ΓööΓöÇΓöÇ bevy_sprite v0.16.1
+Γöé   Γöé       Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γöé       ΓööΓöÇΓöÇ bevy_text v0.16.1
+Γöé   Γöé           ΓööΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_image v0.16.1
+Γöé   Γöé   Γö£ΓöÇΓöÇ bevy_core_pipeline v0.16.1 (*)
+Γöé   Γöé   Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γöé   Γö£ΓöÇΓöÇ bevy_mesh v0.16.1
+Γöé   Γöé   Γöé   Γö£ΓöÇΓöÇ bevy_animation v0.16.1 (*)
+Γöé   Γöé   Γöé   ΓööΓöÇΓöÇ bevy_render v0.16.1
+Γöé   Γöé   Γöé       Γö£ΓöÇΓöÇ bevy_animation v0.16.1 (*)
+Γöé   Γöé   Γöé       Γö£ΓöÇΓöÇ bevy_core_pipeline v0.16.1 (*)
+Γöé   Γöé   Γöé       Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γöé   Γöé       Γö£ΓöÇΓöÇ bevy_pbr v0.16.1 (*)
+Γöé   Γöé   Γöé       Γö£ΓöÇΓöÇ bevy_picking v0.16.1
+Γöé   Γöé   Γöé       Γöé   ΓööΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γöé   Γöé       Γö£ΓöÇΓöÇ bevy_scene v0.16.1
+Γöé   Γöé   Γöé       Γöé   ΓööΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γöé   Γöé       Γö£ΓöÇΓöÇ bevy_sprite v0.16.1 (*)
+Γöé   Γöé   Γöé       ΓööΓöÇΓöÇ bevy_text v0.16.1 (*)
+Γöé   Γöé   Γö£ΓöÇΓöÇ bevy_pbr v0.16.1 (*)
+Γöé   Γöé   Γö£ΓöÇΓöÇ bevy_render v0.16.1 (*)
+Γöé   Γöé   Γö£ΓöÇΓöÇ bevy_sprite v0.16.1 (*)
+Γöé   Γöé   ΓööΓöÇΓöÇ bevy_text v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_mesh v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_pbr v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_picking v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_render v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_scene v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_sprite v0.16.1 (*)
+Γöé   ΓööΓöÇΓöÇ bevy_text v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_core_pipeline v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_diagnostic v0.16.1
+Γöé   Γö£ΓöÇΓöÇ bevy_core_pipeline v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_pbr v0.16.1 (*)
+Γöé   ΓööΓöÇΓöÇ bevy_render v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_image v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_input v0.16.1
+Γöé   Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_picking v0.16.1 (*)
+Γöé   ΓööΓöÇΓöÇ bevy_window v0.16.1
+Γöé       Γö£ΓöÇΓöÇ bevy_core_pipeline v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_pbr v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_picking v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_render v0.16.1 (*)
+Γöé       ΓööΓöÇΓöÇ bevy_text v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_log v0.16.1
+Γöé   Γö£ΓöÇΓöÇ bevy_animation v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_text v0.16.1 (*)
+Γöé   ΓööΓöÇΓöÇ bevy_transform v0.16.1
+Γöé       Γö£ΓöÇΓöÇ bevy_animation v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_core_pipeline v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_mesh v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_pbr v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_picking v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_render v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_scene v0.16.1 (*)
+Γöé       Γö£ΓöÇΓöÇ bevy_sprite v0.16.1 (*)
+Γöé       ΓööΓöÇΓöÇ bevy_text v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_pbr v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_picking v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_render v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_scene v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_sprite v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_state v0.16.1
+Γöé   ΓööΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_text v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_time v0.16.1
+Γöé   Γö£ΓöÇΓöÇ bevy_animation v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_diagnostic v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_internal v0.16.1 (*)
+Γöé   Γö£ΓöÇΓöÇ bevy_picking v0.16.1 (*)
+Γöé   ΓööΓöÇΓöÇ bevy_render v0.16.1 (*)
+Γö£ΓöÇΓöÇ bevy_transform v0.16.1 (*)
+ΓööΓöÇΓöÇ bevy_window v0.16.1 (*)

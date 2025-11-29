@@ -1,3 +1,4 @@
+use crate::models::triggers::LogicBlock;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -20,6 +21,32 @@ pub struct StoryNode {
     // Game State Logic (Triggers)
     #[serde(default)]
     pub required_stats: std::collections::HashMap<String, u32>, // e.g. "Strength" -> 5
+
+    #[serde(default)]
+    pub logic: LogicBlock, // [NEW] Condition & Effect
+
+    #[serde(default)]
+    pub style: NodeStyle, // [NEW] CRAP Styling
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct NodeStyle {
+    #[serde(default)]
+    pub contrast: bool, // Highlighting
+    #[serde(default)]
+    pub alignment: String, // "left", "center", "right"
+    #[serde(default)]
+    pub proximity: f32, // Padding scale (1.0 default)
+}
+
+impl Default for NodeStyle {
+    fn default() -> Self {
+        Self {
+            contrast: false,
+            alignment: "left".to_string(),
+            proximity: 1.0,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

@@ -17,21 +17,21 @@ pub struct WordPhysics {
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::ai::memory::{Document, VectorStore}; // [NEW]
+// use crate::ai::memory::{Document, VectorStore}; // [NEW]
 
 pub struct WeighStation {
     db: PgPool,
     llm: GemmaModel,
-    memory: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW]
+    // memory: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW]
 }
 
 impl WeighStation {
     pub fn new(
         db: PgPool,
         llm: GemmaModel,
-        memory: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW]
+        // memory: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW]
     ) -> Self {
-        Self { db, llm, memory }
+        Self { db, llm } //, memory }
     }
 
     /// The core loop: Takes a raw word, weighs it, stores it.

@@ -289,5 +289,7 @@ fn create_node(title: &str, content: &str, x: f64, y: f64, load: u8) -> StoryNod
         learner_profiles: vec![],
         gardens_active: vec![],
         required_stats: std::collections::HashMap::new(),
+        logic: Default::default(),
+        style: Default::default(),
     }
 }

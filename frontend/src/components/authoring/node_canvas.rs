@@ -1,8 +1,11 @@
 use crate::api::{get_graph, save_graph};
 // use crate::components::authoring::property_editor::PropertyEditor;
-use crate::components::authoring::blueprint_station::BlueprintStation; // [NEW]
+use crate::components::authoring::blueprint_station::BlueprintStation;
+use crate::components::authoring::owl_diagnostic::OwlDiagnostic; // [NEW]
 use crate::components::authoring::story_node::StoryNodeComponent;
 use crate::components::authoring::template_selector::TemplateSelector;
+use crate::components::authoring::word_smithy::WordSmithy; // [NEW]
+use crate::components::toast::Toast; // [NEW]
 use common::expert::{Connection, StoryGraph, StoryNode};
 use leptos::prelude::*;
 
@@ -15,12 +18,15 @@ pub fn NodeCanvas() -> impl IntoView {
     let (selected_node_id, set_selected_node_id) = signal(None::<String>);
 
     let (show_template_selector, set_show_template_selector) = signal(false);
-    let (show_blueprint_station, set_show_blueprint_station) = signal(false); // [NEW]
+    let (show_blueprint_station, set_show_blueprint_station) = signal(false);
+    let (show_word_smithy, set_show_word_smithy) = signal(false); // [NEW]
+    let (show_owl_diagnostic, set_show_owl_diagnostic) = signal(false); // [NEW]
     let navigate = leptos_router::hooks::use_navigate();
 
     // Loading and error states
     let (loading, set_loading) = signal(true);
     let (error_message, set_error_message) = signal(None::<String>);
+    let (toast_message, set_toast_message) = signal(None::<String>); // [NEW]
 
     // Connection dragging state
     let (connecting_source, set_connecting_source) = signal(None::<String>); // node_id
@@ -80,8 +86,19 @@ pub fn NodeCanvas() -> impl IntoView {
             };
 
             match save_graph(graph).await {
-                Ok(_) => leptos::logging::log!("Graph saved successfully"),
-                Err(e) => leptos::logging::error!("Failed to save graph: {}", e),
+                Ok(_) => {
+                    leptos::logging::log!("Graph saved successfully");
+                    set_toast_message.set(Some("Project Saved Successfully".to_string()));
+                    // Auto-hide toast after 3 seconds
+                    leptos::task::spawn_local(async move {
+                        gloo_timers::future::sleep(std::time::Duration::from_secs(3)).await;
+                        set_toast_message.set(None);
+                    });
+                }
+                Err(e) => {
+                    leptos::logging::error!("Failed to save graph: {}", e);
+                    set_toast_message.set(Some(format!("Error Saving: {}", e)));
+                }
             }
         });
     };
@@ -203,78 +220,56 @@ pub fn NodeCanvas() -> impl IntoView {
              on:mouseleave=on_mouse_up
              on:wheel=on_wheel
         >
-            // Toolbar
-            <div class="absolute top-4 right-4 z-10 flex gap-2">
-                <button
-                    class="px-4 py-2 bg-boilermaker-gold hover:bg-white text-black rounded shadow-lg font-bold transition-colors border-2 border-boilermaker-gold flex items-center gap-2"
-                    on:click=move |_| set_show_blueprint_station.set(true)
-                >
-                    <span>"🤖"</span>
-                    "Design with Pete"
-                </button>
-                <button
-                    class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 text-white rounded shadow-lg font-bold transition-colors"
-                    on:click=move |_| {
-                        let new_node = StoryNode {
-                            id: uuid::Uuid::new_v4().to_string(),
-                            title: "New Station".to_string(),
-                            content: "Learning objective...".to_string(),
-                            x: 100.0,
-                            y: 100.0,
-                            passenger_count: 1,
-                            complexity_level: 1,
-                            learner_profiles: vec![],
-                            gardens_active: vec![],
-                            required_stats: std::collections::HashMap::new(),
-                        };
-                        set_nodes.update(|n| n.push(RwSignal::new(new_node)));
-                    }
-                >
-                    "+ Add Station"
-                </button>
-                <button
-                    class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded shadow-lg font-bold transition-colors"
-                    on:click=save_graph_handler
-                >
-                    "Save Graph"
-                </button>
-                <button
-                    class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded shadow-lg font-bold transition-colors flex items-center gap-2"
-                    on:click=move |_| {
-                        // Save then Navigate
-                        let current_nodes: Vec<StoryNode> = nodes.get().iter().map(|s| s.get()).collect();
-                        let current_connections = connections.get();
-                        let (id, title) = graph_meta.get();
-                        let graph_id = if id.is_empty() { "demo_graph".to_string() } else { id.clone() };
 
-                        let graph = StoryGraph {
-                            id: graph_id.clone(),
-                            title: if title.is_empty() { "New Story".to_string() } else { title },
-                            nodes: current_nodes,
-                            connections: current_connections,
-                        };
+            <div class="absolute top-0 left-0 right-0 z-20">
+                // Menu Row with Functional Dropdowns
+                <div class="bg-slate-900 border-b border-slate-700 px-4 py-1.5 flex items-center gap-1 text-sm text-slate-300">
+                    <span class="font-semibold text-white mr-4">"Day Dream Authoring"</span>
 
-                        let navigate = navigate.clone();
-                        leptos::task::spawn_local(async move {
-                            if let Ok(_) = save_graph(graph).await {
-                                navigate(&format!("/journey/{}", graph_id), Default::default());
+                    // Play Button
+                    <button
+                        class="px-3 py-1 bg-boilermaker-gold text-slate-900 font-bold rounded hover:bg-yellow-500 transition-colors flex items-center gap-2 mr-2"
+                        on:click=move |_| {
+                            let (id, _) = graph_meta.get();
+                            if !id.is_empty() {
+                                navigate(&format!("/play/{}", id), Default::default());
+                            } else {
+                                leptos::logging::warn!("Cannot play unsaved graph");
                             }
-                        });
-                    }
-                >
-                    <span>"▶️"</span>
-                    "Test Drive"
-                </button>
+                        }
+                    >
+                        <span>"▶ Play"</span>
+                    </button>
+
+                    // Save Button [NEW]
+                    <button
+                        class="px-3 py-1 bg-slate-700 text-slate-200 font-bold rounded hover:bg-slate-600 transition-colors flex items-center gap-2 mr-4"
+                        on:click=save_graph_handler
+                    >
+                        <span>"💾 Save"</span>
+                    </button>
+
+                    // O.W.L. Diagnostic Button [NEW]
+                    <button
+                        class="px-3 py-1 bg-slate-800 text-slate-300 font-bold rounded hover:bg-slate-700 hover:text-boilermaker-gold transition-colors flex items-center gap-2 mr-4 border border-slate-600"
+                        on:click=move |_| set_show_owl_diagnostic.set(true)
+                        title="Run O.W.L. Diagnostic (Instructional Design Check)"
+                    >
+                        <span>"🦉 O.W.L."</span>
+                    </button>
+
+                    // Blueprint Station Button [RESTORED]
+                    <button
+                        class="px-3 py-1 bg-indigo-900 text-indigo-100 font-bold rounded hover:bg-indigo-800 hover:text-white transition-colors flex items-center gap-2 mr-4 border border-indigo-700 shadow-lg shadow-indigo-900/50"
+                        on:click=move |_| set_show_blueprint_station.set(true)
+                        title="Open Blueprint Station (AI Architect)"
+                    >
+                        <span>"📐 Blueprint"</span>
+                    </button>
+                </div>
             </div>
 
-            // Transform Container
-            <div
-                class="absolute inset-0 origin-top-left will-change-transform"
-                style=move || {
-                    let (x, y, s) = view_transform.get();
-                    format!("transform: translate({}px, {}px) scale({})", x, y, s)
-                }
-            >
+
                 // SVG Layer for Connections (Tracks)
                 <svg class="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
                     <defs>
@@ -367,7 +362,7 @@ pub fn NodeCanvas() -> impl IntoView {
                         }
                     />
                 </div>
-            </div>
+
 
             // Loading / Error / Empty State Display
             {move || {
@@ -421,6 +416,18 @@ pub fn NodeCanvas() -> impl IntoView {
                 })
             })}
 
+            // O.W.L. Diagnostic Modal
+            {move || if show_owl_diagnostic.get() {
+                view! {
+                    <OwlDiagnostic
+                        nodes=Signal::derive(move || nodes.get().iter().map(|n| n.get()).collect())
+                        on_close=move || set_show_owl_diagnostic.set(false)
+                    />
+                }.into_any()
+            } else {
+                view! { <span /> }.into_any()
+            }}
+
             // Template Selector Modal
             {move || if show_template_selector.get() {
                 view! {
@@ -455,6 +462,27 @@ pub fn NodeCanvas() -> impl IntoView {
             } else {
                 view! { <span /> }.into_any()
             }}
+
+            // Word Smithy Modal [NEW]
+            {move || if show_word_smithy.get() {
+                view! {
+                    <WordSmithy
+                        on_close=Callback::new(move |_| set_show_word_smithy.set(false))
+                        on_save=Callback::new(move |def: crate::components::authoring::word_smithy::WordDefinition| {
+                            leptos::logging::log!("Forged Word: {:?} - Power: {:?}", def.word, def.power);
+                            // TODO: Save to backend or local state
+                        })
+                    />
+                }.into_any()
+            } else {
+                view! { <span /> }.into_any()
+            }}
+
+            // Toast Notification [NEW]
+            <Toast
+                message=toast_message
+                on_close=Callback::new(move |_| set_toast_message.set(None))
+            />
         </div>
     }
 }

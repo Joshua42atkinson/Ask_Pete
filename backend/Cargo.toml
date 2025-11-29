@@ -56,7 +56,7 @@ tokenizers = "0.19"
 # ort = { version = "2.0.0-rc.9", features = ["load-dynamic", "cuda", "download-binaries"] }
 
 # Local Vector DB (The "Brain" Storage)
-lancedb = "0.4"
+# lancedb = "0.4"
 
 # Pete AI Assistant (NEW)
 hf-hub = "0.3"
