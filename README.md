@@ -91,19 +91,6 @@
     ```
 
 ---
-
-## 📚 Documentation
-
-- **[Vision Document](docs/vision_document.md)**: The philosophical foundation.
-- **[Research Agenda](docs/capstone_research/research_agenda.md)**: The theoretical framework.
-- **[Cognitive Load Framework](docs/cognitive_load_framework.md)**: The physics of learning.
-- **[Migration Protocol](docs/migration_protocol.md)**: From Daydream to Ask Pete.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions from Instructional Designers, Rust Developers, and AI Researchers.
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
 ## 📄 License

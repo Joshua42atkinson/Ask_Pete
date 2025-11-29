@@ -1,8 +1,11 @@
 [workspace]
 members = [
-    "frontend",
     "backend",
     "common",
+    "libs/client_shared",
+    "apps/researcher",
+    "apps/teacher",
+    "apps/player", "libs/client_shared",
 ]
 resolver = "2"
 

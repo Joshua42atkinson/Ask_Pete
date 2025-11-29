@@ -1,6 +1,6 @@
 use crate::api::{get_graph, save_graph};
 // use crate::components::authoring::property_editor::PropertyEditor;
-use crate::components::authoring::blueprint_station::BlueprintStation;
+use crate::components::authoring::train_yard::TrainYard;
 use crate::components::authoring::owl_diagnostic::OwlDiagnostic; // [NEW]
 use crate::components::authoring::story_node::StoryNodeComponent;
 use crate::components::authoring::template_selector::TemplateSelector;
@@ -18,7 +18,7 @@ pub fn NodeCanvas() -> impl IntoView {
     let (selected_node_id, set_selected_node_id) = signal(None::<String>);
 
     let (show_template_selector, set_show_template_selector) = signal(false);
-    let (show_blueprint_station, set_show_blueprint_station) = signal(false);
+    let (show_train_yard, set_show_train_yard) = signal(false);
     let (show_word_smithy, set_show_word_smithy) = signal(false); // [NEW]
     let (show_owl_diagnostic, set_show_owl_diagnostic) = signal(false); // [NEW]
     let navigate = leptos_router::hooks::use_navigate();
@@ -224,7 +224,7 @@ pub fn NodeCanvas() -> impl IntoView {
             <div class="absolute top-0 left-0 right-0 z-20">
                 // Menu Row with Functional Dropdowns
                 <div class="bg-slate-900 border-b border-slate-700 px-4 py-1.5 flex items-center gap-1 text-sm text-slate-300">
-                    <span class="font-semibold text-white mr-4">"Day Dream Authoring"</span>
+                    <span class="font-semibold text-white mr-4">"Ask Pete Authoring"</span>
 
                     // Play Button
                     <button
@@ -258,13 +258,13 @@ pub fn NodeCanvas() -> impl IntoView {
                         <span>"🦉 O.W.L."</span>
                     </button>
 
-                    // Blueprint Station Button [RESTORED]
+                    // Train Yard Button [NEW]
                     <button
                         class="px-3 py-1 bg-indigo-900 text-indigo-100 font-bold rounded hover:bg-indigo-800 hover:text-white transition-colors flex items-center gap-2 mr-4 border border-indigo-700 shadow-lg shadow-indigo-900/50"
-                        on:click=move |_| set_show_blueprint_station.set(true)
-                        title="Open Blueprint Station (AI Architect)"
+                        on:click=move |_| set_show_train_yard.set(true)
+                        title="Open Train Yard (Curriculum Dispatcher)"
                     >
-                        <span>"📐 Blueprint"</span>
+                        <span>"🚉 Train Yard"</span>
                     </button>
                 </div>
             </div>
@@ -445,11 +445,11 @@ pub fn NodeCanvas() -> impl IntoView {
                 view! { <span /> }.into_any()
             }}
 
-            // Blueprint Station Modal [NEW]
-            {move || if show_blueprint_station.get() {
+            // Train Yard Modal [NEW]
+            {move || if show_train_yard.get() {
                 view! {
-                    <BlueprintStation
-                        on_close=Callback::new(move |_| set_show_blueprint_station.set(false))
+                    <TrainYard
+                        on_close=Callback::new(move |_| set_show_train_yard.set(false))
                         on_generate={Callback::new(move |graph: StoryGraph| {
                             // Replace current graph with generated one
                             let node_signals = graph.nodes.into_iter().map(|n| RwSignal::new(n)).collect();

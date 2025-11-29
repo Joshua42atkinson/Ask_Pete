@@ -2,7 +2,7 @@
 
 pub mod economy;
 pub mod expert;
-pub mod mobile;
+// pub mod mobile;
 pub mod reflection;
 
 pub mod ai;

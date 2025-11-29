@@ -1,4 +1,4 @@
-pub mod blueprint_station;
+pub mod train_yard;
 
 pub mod inspector;
 pub mod node_canvas;
