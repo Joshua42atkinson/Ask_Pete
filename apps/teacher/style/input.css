@@ -7,6 +7,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Missing Background Utility - Safelisted here */
+.bg-industrial-slate {
+  background-color: #1B1B1E;
+}
+
 /* Base Layer - Typography */
 @layer base {
 

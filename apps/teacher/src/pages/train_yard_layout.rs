@@ -21,9 +21,6 @@ pub fn TrainYardLayout() -> impl IntoView {
                         <a href="/yard" class="px-4 py-2 rounded bg-slate-800 hover:bg-slate-700 transition">
                             "Graph Editor"
                         </a>
-                        <a href="/yard/weigh-station" class="px-4 py-2 rounded bg-slate-800 hover:bg-slate-700 transition">
-                            "Weigh Station"
-                        </a>
                         <a href="/yard/library" class="px-4 py-2 rounded bg-slate-800 hover:bg-slate-700 transition">
                             "Knowledge Library"
                         </a>

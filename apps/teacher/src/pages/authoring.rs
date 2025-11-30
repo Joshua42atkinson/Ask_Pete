@@ -1,4 +1,4 @@
-use crate::components::authoring::node_canvas::NodeCanvas;
+use domain_trainyard::authoring::node_canvas::NodeCanvas;
 use leptos::prelude::*;
 use leptos_router::hooks::use_navigate;
 

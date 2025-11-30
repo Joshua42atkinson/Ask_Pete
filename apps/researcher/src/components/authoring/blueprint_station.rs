@@ -1,5 +1,5 @@
 use crate::components::tooltip::Tooltip; // [NEW]
-use common::expert::StoryGraph;
+use pete_core::expert::StoryGraph;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -146,7 +146,7 @@ pub fn BlueprintStation(
                             }
                             prop:value=move || device.get()
                         >
-                            {common::models::literary_device::LiteraryDevice::all().into_iter().map(|d| {
+                            {pete_core::models::literary_device::LiteraryDevice::all().into_iter().map(|d| {
                                 let label = d.to_string();
                                 view! { <option value=label.clone()>{label.clone()}</option> }
                             }).collect::<Vec<_>>()}

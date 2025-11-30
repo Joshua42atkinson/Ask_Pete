@@ -70,26 +70,9 @@ pub fn EngineCabLayout() -> impl IntoView {
                 </header>
 
                 // Main Workspace
-                <main class="flex-grow p-6 overflow-auto relative">
-                    <div class="max-w-5xl mx-auto h-full flex flex-col justify-center items-center">
-                        <div class="p-12 border border-[var(--border-color)] bg-[var(--bg-secondary)]/50 backdrop-blur chamfered-corners max-w-2xl w-full text-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
-                            <h1 class="text-4xl font-bold text-[#BC13FE] mb-6 tracking-tight">
-                                "INTERFACE C ONLINE"
-                            </h1>
-                            <p class="text-lg opacity-80 mb-8 leading-relaxed">
-                                "Welcome to the student experience. This interface adapts to your preferences while maintaining the Boilermaker standard."
-                            </p>
-
-                            <div class="flex justify-center gap-4">
-                                <button
-                                    class="px-8 py-3 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-bold uppercase tracking-widest hover:brightness-110 transition-all shadow-[0_0_15px_var(--glow-color)]"
-                                    on:click=move |_| set_show_ai_mirror.set(true)
-                                >
-                                    "Talk to Pete"
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                <main class="flex-grow relative overflow-hidden">
+                    // The Bevy Canvas takes over this space
+                    <crate::components::bevy_canvas::BevyCanvas />
                 </main>
             </div>
 

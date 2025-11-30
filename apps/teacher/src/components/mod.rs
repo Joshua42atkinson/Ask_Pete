@@ -1,7 +1,8 @@
+pub mod admin_panel;
 pub mod ai_mirror_chat;
 pub mod ai_test_panel;
 pub mod artifact_card;
-pub mod authoring;
+// pub mod authoring;
 pub mod boilermaker;
 pub mod design_process;
 pub mod dispatcher_console;

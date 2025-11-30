@@ -1,4 +1,4 @@
-use common::expert::StoryNode;
+use pete_core::expert::StoryNode;
 use leptos::prelude::*;
 use wasm_bindgen::JsCast;
 // use web_sys::document; // Removed invalid import

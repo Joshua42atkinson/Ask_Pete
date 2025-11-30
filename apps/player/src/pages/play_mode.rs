@@ -1,6 +1,6 @@
 use crate::api::get_graph;
-use common::expert::StoryGraph;
-use common::models::triggers::{GameState, TriggerCondition, TriggerEffect};
+use pete_core::expert::StoryGraph;
+use pete_core::models::triggers::{GameState, TriggerCondition, TriggerEffect};
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
@@ -282,6 +282,16 @@ pub fn PlayMode() -> impl IntoView {
                     </div>
                 }
             })}
+
+            // Voice Input Control
+            <div class="fixed bottom-8 left-8 z-50">
+                <crate::components::voice_input::VoiceInput 
+                    on_input=Box::new(move |text| {
+                        set_toast_message.set(Some(format!("Voice Command: {}", text)));
+                        // In the future, this would parse the command
+                    })
+                />
+            </div>
         </div>
     }
 }

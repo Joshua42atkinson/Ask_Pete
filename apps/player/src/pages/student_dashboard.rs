@@ -1,6 +1,4 @@
-use crate::ui_theme::{
-    blueprint_grid_background, chamfered_panel_classes, mechanical_button_classes,
-};
+use crate::ui_theme::{chamfered_panel_classes, mechanical_button_classes};
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -40,7 +38,8 @@ pub fn StudentDashboard() -> impl IntoView {
     view! {
         <div class="min-h-screen bg-[#121212] text-[#F0F0F0] font-ui relative overflow-hidden">
             // Background
-            <div class={blueprint_grid_background()}></div>
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-black opacity-90 z-0"></div>
+            <div class="absolute inset-0 bg-[url('/assets/pattern_gears.png')] opacity-5 mix-blend-overlay z-0 pointer-events-none"></div>
 
             <div class="relative z-10 container mx-auto px-6 py-12">
                 <header class="mb-12 text-center">
@@ -106,7 +105,7 @@ pub fn StudentDashboard() -> impl IntoView {
                                                         } else {
                                                             view! {
                                                                 <a
-                                                                    href={format!("/journey/{}", scenario.id)}
+                                                                    href={format!("/cab/journey/{}", scenario.id)}
                                                                     class={format!("block text-center {}", mechanical_button_classes("primary"))}
                                                                 >
                                                                     "Depart Station"

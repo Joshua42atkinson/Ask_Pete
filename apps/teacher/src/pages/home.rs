@@ -26,12 +26,12 @@ pub fn Home() -> impl IntoView {
                         </p>
 
                         <div class="flex gap-4">
-                            <a href="/chat">
+                            <a href="/yard/chat">
                                 <MechanicalButton primary=true class="w-full sm:w-auto">
                                     "Initiate Comms"
                                 </MechanicalButton>
                             </a>
-                            <a href="/authoring">
+                            <a href="/yard/authoring">
                                 <MechanicalButton class="w-full sm:w-auto">
                                     "Access Forge"
                                 </MechanicalButton>

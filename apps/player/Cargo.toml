@@ -18,7 +18,7 @@ gloo-net = "0.5"
 serde_json = "1.0"
 gloo-timers = { version = "0.3", features = ["futures"] }
 gloo-console = "0.3"
-common = { path = "../../common" }
+pete_core = { path = "../../libs/core" }
 web-sys = { version = "0.3", features = [
     "MouseEvent", "Element", "SvgElement", "DomRect", "HtmlFormElement", "FormData", "Event",
     # WebGPU Support for Client-Side AI
@@ -46,6 +46,9 @@ candle-transformers = { version = "0.8.0", features = [] } # Tried "gemma" but m
 # tokenizers = { version = "0.15", default-features = false, features = ["onig"] }
 rand = { version = "0.8", features = ["small_rng"] }
 
+# Bevy Engine (Pure WASM)
+bevy = { version = "0.13", default-features = true, features = ["webgl2"] }
+
 # Server-Side Rendering (SSR) Dependencies
 [dependencies.axum]
 version = "0.7"
@@ -60,9 +63,10 @@ version = "1.37"
 features = ["full"]
 optional = true
 
-[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 # Fixes WASM runtime error by using browser's JS-based randomness source
-getrandom = { version = "=0.2.16", features = ["js"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 half = "=2.4.1"
 
 [features]
@@ -76,6 +80,3 @@ ssr = [
     "leptos_router/ssr",
 ]
 
-[[bin]]
-name = "frontend_bin"
-path = "src/main.rs"

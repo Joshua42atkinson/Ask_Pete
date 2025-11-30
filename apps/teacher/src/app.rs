@@ -21,7 +21,7 @@ pub fn App() -> impl IntoView {
         <Router>
             <Routes fallback=|| "Not Found.">
                 <ParentRoute path=path!("/") view=TrainYardLayout>
-                    <Route path=path!("") view=move || view! { <crate::components::authoring::node_canvas::NodeCanvas/> }/>
+                    <Route path=path!("") view=move || view! { <domain_trainyard::authoring::node_canvas::NodeCanvas/> }/>
                     <Route path=path!("library") view=move || view! { <KnowledgeLibrary/> }/>
                 </ParentRoute>
                 <Route path=path!("/settings") view=crate::pages::settings::SettingsPage/>

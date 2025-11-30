@@ -64,7 +64,7 @@ pub fn CharacterCreationPage() -> impl IntoView {
                     <div class="text-center p-12 border border-gauge-green bg-gauge-green/10 rounded-lg">
                         <h2 class="text-2xl font-bold text-gauge-green mb-4">"APPLICATION ACCEPTED"</h2>
                         <p>"Report to the platform immediately. The train is leaving."</p>
-                        <a href="/dashboard" class="inline-block mt-6 mechanical-button-primary">"PROCEED TO DASHBOARD"</a>
+                        <a href="/yard/dashboard" class="inline-block mt-6 mechanical-button-primary">"PROCEED TO DASHBOARD"</a>
                     </div>
                 }.into_any()
             } else {
