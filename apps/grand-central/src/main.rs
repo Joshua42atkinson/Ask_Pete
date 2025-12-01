@@ -1,21 +1,19 @@
-#![allow(dead_code, unused_imports, unused_variables, unused_mut)]
-use crate::handlers::weigh_station::WeighStation;
-use axum::{extract::FromRef, response::IntoResponse, Router};
-use bevy::prelude::*;
-use bevy_yarnspinner::prelude::*;
-use domain_physics::components::*;
-use domain_physics::components::{
-    Coal, CognitiveLoad, DownloadCommandInbox, EnginePower, Experience, Level, Location, Mass,
-    PeteCommandInbox, PeteResponseOutbox, PhysicsState, ResearchLog, SharedCampaignStateResource,
-    SharedDownloadStateResource, SharedPhysicsResource, SharedResearchLogResource,
-    SharedStoryProgressResource, SharedVirtuesResource, Steam, StudentMiles, TrainVelocity,
-    VirtueTopology, VoteInbox,
-};
-use domain_physics::multiplayer_client::{CampaignState, MultiplayerPlugin};
-use domain_physics::systems::*;
-use leptos::get_configuration;
+//! # Grand Central Station (Backend Server)
+//!
+//! This is the main entry point for the Ask Pete backend.
+//! It handles:
+//! - HTTP requests via Axum
+//! - Real-time game state via Bevy (ECS)
+//! - Database interactions via SQLx
+//! - AI integration via Socratic Engine
+//!
+//! ## Architecture
+//! The server runs a hybrid architecture:
+//! 1. **Axum**: Handles standard web routes (REST/RPC).
+//! 2. **Bevy**: Runs a simulation loop for the game world (physics, state).
+//! 3. **Tokio**: Manages async tasks and concurrency.
 
-use leptos::prelude::*;
+#![allow(dead_code, unused_imports, unused_variables, unused_mut)]
 use leptos::prelude::*;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::env;
@@ -50,8 +48,25 @@ use crate::routes::player::player_routes;
 use crate::routes::research::research_routes;
 use crate::routes::weigh_station_routes::weigh_station_routes;
 use crate::static_assets::Assets as StaticAssets;
+use axum::response::IntoResponse;
+use axum::Router;
+use bevy::core::Name;
+use bevy::prelude::*;
+use bevy_yarnspinner::prelude::*;
+use domain_physics::components::{
+    Archetype, AskPeteEvent, CargoHold, CognitiveLoad, DownloadCommandInbox, DownloadProgressEvent,
+    FuelTank, Location, LocomotiveBundle, LocomotiveStats, Persona, PeteCommandInbox,
+    PeteResponseEvent, PeteResponseOutbox, PhysicsState, PlayWhistleEvent, Player,
+    QuestCommandInbox, ResearchLog, SharedCampaignStateResource, SharedDownloadStateResource,
+    SharedPhysicsResource, SharedResearchLogResource, SharedStoryProgressResource,
+    SharedVirtuesResource, StallEvent, StartDownloadEvent, StartQuestEvent, StoryProgress,
+    StudentMiles, TrackGradient, TrainVelocity, VirtueTopology, VoteInbox,
+};
+use domain_physics::multiplayer_client::{CampaignState, MultiplayerPlugin};
+use domain_physics::systems::*;
 use infra_ai::{GemmaConfigWrapper, GemmaModel, SocraticEngine};
 use infra_db::ConversationMemory;
+use leptos::get_configuration;
 
 fn run_bevy_app(
     shared_log: SharedResearchLogResource,
@@ -64,6 +79,7 @@ fn run_bevy_app(
     shared_campaign_state: SharedCampaignStateResource,
     vote_inbox: VoteInbox,
     shared_story_progress: SharedStoryProgressResource,
+    quest_command_inbox: QuestCommandInbox,
 ) {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins);
@@ -79,6 +95,8 @@ fn run_bevy_app(
     app.add_event::<DownloadProgressEvent>();
     app.add_event::<AskPeteEvent>();
     app.add_event::<PeteResponseEvent>();
+    app.add_event::<StartQuestEvent>();
+    app.add_event::<StallEvent>();
 
     // Insert Shared Resources
     app.insert_resource(shared_log);
@@ -91,6 +109,7 @@ fn run_bevy_app(
     app.insert_resource(shared_campaign_state);
     app.insert_resource(vote_inbox);
     app.insert_resource(shared_story_progress);
+    app.insert_resource(quest_command_inbox);
 
     // Register Systems
     app.add_systems(
@@ -113,14 +132,16 @@ fn run_bevy_app(
             sync_vote_inbox,
             sync_story_progress_to_shared,
             generate_steam,
+            sync_quest_inbox,
+            handle_start_quest,
         ),
     );
 
     let simulated_player = get_simulated_character();
 
-    // Spawn StudentBundle
-    app.world_mut().spawn(StudentBundle {
-        name: Name::new(simulated_player.name),
+    // Spawn LocomotiveBundle (Replaces StudentBundle)
+    app.world_mut().spawn(LocomotiveBundle {
+        name: bevy::core::Name::new(simulated_player.name),
         persona: Persona {
             archetype: Archetype::Innocent,
             shadow_trait: "None".to_string(),
@@ -138,18 +159,29 @@ fn run_bevy_app(
             learned_vocab: simulated_player.learned_vocab,
         },
         research_log: ResearchLog::default(),
-        mass: Mass(10.0),                 // Default mass (Cargo Weight)
-        engine_power: EnginePower(100.0), // Default power (Willpower)
-        velocity: TrainVelocity(0.0),     // Starts stationary
+        stats: LocomotiveStats {
+            traction: 10,
+            velocity: 10,
+            efficiency: 10,
+            analysis: 10,
+            signaling: 10,
+            coupling: 10,
+        },
+        fuel: FuelTank {
+            current_coal: 100.0,
+            current_steam: 0.0,
+            max_capacity: 100.0,
+        },
+        cargo: CargoHold::default(),
+        velocity: TrainVelocity(0.0),
         miles: StudentMiles::default(),
-        coal: Coal(100.0),
-        steam: Steam(0.0),
         location: Location {
             latitude: 40.4282,
             longitude: -86.9144,
         },
-        level: Level(1),
-        xp: Experience(0),
+        transform: Transform::default(),
+        global_transform: GlobalTransform::default(),
+        player_marker: Player,
     });
 
     app.run();
@@ -194,6 +226,7 @@ async fn static_handler(uri: axum::http::Uri) -> impl axum::response::IntoRespon
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
     println!("Starting Ask Pete Backend Server...");
 
     // Initialize Shared Resources
@@ -210,6 +243,7 @@ async fn main() {
     let vote_inbox = VoteInbox(Arc::new(RwLock::new(Vec::new())));
     let shared_story_progress =
         SharedStoryProgressResource(Arc::new(RwLock::new(StoryProgress::default())));
+    let quest_command_inbox = QuestCommandInbox(Arc::new(RwLock::new(Vec::new())));
 
     let state_clone = download_state.clone();
     let pete_inbox_clone = pete_command_inbox.clone();
@@ -218,6 +252,7 @@ async fn main() {
     let campaign_clone = shared_campaign_state.clone();
     let vote_inbox_clone = vote_inbox.clone();
     let story_progress_clone = shared_story_progress.clone();
+    let quest_inbox_clone = quest_command_inbox.clone();
 
     let log_clone = shared_research_log.clone();
     let virtues_clone = shared_virtues.clone();
@@ -297,13 +332,15 @@ async fn main() {
     socratic_engine_instance.set_gemini_client(gemini_client);
 
     // Initialize Antigravity Client (Enterprise Bridge)
-    let antigravity_client = infra_ai::antigravity::AntigravityClient::new();
+    let antigravity_client =
+        infra_ai::antigravity::AntigravityClient::new("ask-pete-dev".to_string());
     socratic_engine_instance.set_antigravity_client(antigravity_client);
 
     // Pass shared Gemma model to Socratic Engine
-    if let Some(ref model) = shared_gemma_model {
-        socratic_engine_instance.set_gemma_model(model.clone());
-    }
+    // Pass shared Gemma model to Socratic Engine
+    // if let Some(ref model) = shared_gemma_model {
+    //     socratic_engine_instance.set_gemma_model(model.clone());
+    // }
 
     let socratic_engine = Arc::new(tokio::sync::RwLock::new(socratic_engine_instance));
 
@@ -336,7 +373,7 @@ async fn main() {
     );
 
     // Initialize Local Vector DB (LanceDB)
-    let memory_store = match crate::ai::memory::LanceDbConnection::new("brain_vectors").await {
+    let memory_store = match infra_db::LanceDbConnection::new("brain_vectors").await {
         Ok(store) => {
             println!("🧠 [Memory] Local Vector DB initialized at 'data/brain_vectors'");
             Some(Arc::new(store))
@@ -350,11 +387,9 @@ async fn main() {
     // Initialize Weigh Station & Shared Gemma Model
     let weigh_station = if let Some(ref model) = shared_gemma_model {
         if let Some(db_pool) = pool.clone() {
-            Some(Arc::new(tokio::sync::Mutex::new(WeighStation::new(
-                db_pool,
-                model.clone(),
-                // memory_store.clone(),
-            ))))
+            Some(Arc::new(tokio::sync::Mutex::new(
+                crate::handlers::weigh_station::WeighStation::new(db_pool, model.clone()),
+            )))
         } else {
             println!("⚠️ Database not available, Weigh Station disabled.");
             None
@@ -382,6 +417,7 @@ async fn main() {
         shared_campaign_state,
         vote_inbox,
         shared_story_progress: shared_story_progress.0,
+        quest_command_inbox,
         // memory_store,
     };
 
@@ -432,6 +468,14 @@ async fn main() {
         .route(
             "/api/architect/blueprint",
             axum::routing::post(crate::handlers::architect::generate_blueprint),
+        )
+        .route(
+            "/api/quest/start/:id",
+            axum::routing::post(crate::handlers::quest::start_quest),
+        )
+        .route(
+            "/api/quest/complete/:id",
+            axum::routing::post(crate::handlers::quest::complete_quest),
         )
         .layer(axum::middleware::from_fn(
             crate::middleware::auth::auth_middleware,

@@ -1,9 +1,10 @@
 use crate::api::get_graph;
-use pete_core::expert::StoryGraph;
-use pete_core::models::triggers::{GameState, TriggerCondition, TriggerEffect};
+use crate::components::authoring::owl_diagnostic::OwlDiagnostic;
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;
+use pete_core::expert::StoryGraph;
+use pete_core::models::triggers::{GameState, TriggerCondition, TriggerEffect};
 
 #[derive(Params, PartialEq, Clone, Debug)]
 pub struct PlayModeParams {
@@ -20,6 +21,7 @@ pub fn PlayMode() -> impl IntoView {
 
     // Toast Notification State
     let (toast_message, set_toast_message) = signal(None::<String>);
+    let (show_owl, set_show_owl) = signal(false);
 
     // Load graph
     Effect::new(move |_| {
@@ -179,6 +181,13 @@ pub fn PlayMode() -> impl IntoView {
                         <span class="text-slate-500">"STATS"</span>
                         <span class="text-cyan-400">{move || format!("{:?}", game_state.get().variables)}</span>
                     </div>
+                    <button
+                        class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-boilermaker-gold border border-slate-700 rounded transition-colors flex items-center gap-2"
+                        on:click=move |_| set_show_owl.set(true)
+                        title="Open O.W.L. Diagnostic"
+                    >
+                        <span>"🦉"</span>
+                    </button>
                 </div>
             </header>
 
@@ -285,13 +294,27 @@ pub fn PlayMode() -> impl IntoView {
 
             // Voice Input Control
             <div class="fixed bottom-8 left-8 z-50">
-                <crate::components::voice_input::VoiceInput 
+                <crate::components::voice_input::VoiceInput
                     on_input=Box::new(move |text| {
                         set_toast_message.set(Some(format!("Voice Command: {}", text)));
                         // In the future, this would parse the command
                     })
                 />
             </div>
+
+            // O.W.L. Diagnostic Modal
+            {move || if show_owl.get() {
+                view! {
+                    <OwlDiagnostic
+                        nodes=Signal::derive(move || {
+                            graph.get().map(|g| g.nodes).unwrap_or_default()
+                        })
+                        on_close=move || set_show_owl.set(false)
+                    />
+                }.into_any()
+            } else {
+                view! { <span /> }.into_any()
+            }}
         </div>
     }
 }
