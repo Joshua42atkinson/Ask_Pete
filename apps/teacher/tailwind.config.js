@@ -1,6 +1,20 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.rs", "./index.html"],
+  content: [
+    "./src/**/*.rs",
+    "./index.html",
+  ],
+  safelist: [
+    "bg-industrial-slate",
+    "w-72",
+    "absolute",
+    "relative",
+    "h-full",
+    "w-full",
+    "z-10",
+    "z-20",
+    "station-node"
+  ],
   theme: {
     extend: {
       colors: {

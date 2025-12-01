@@ -1,6 +1,6 @@
 use crate::api::get_graph;
-use common::expert::StoryGraph;
-use common::models::triggers::{GameState, TriggerCondition, TriggerEffect};
+use pete_core::expert::StoryGraph;
+use pete_core::models::triggers::{GameState, TriggerCondition, TriggerEffect};
 use leptos::prelude::*;
 use leptos_router::hooks::use_params;
 use leptos_router::params::Params;

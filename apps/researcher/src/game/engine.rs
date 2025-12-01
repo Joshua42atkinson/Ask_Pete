@@ -1,4 +1,4 @@
-use common::expert::{StoryGraph, StoryNode};
+use pete_core::expert::{StoryGraph, StoryNode};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct GameState {

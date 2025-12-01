@@ -1,0 +1,149 @@
+﻿2025-11-29T22:22:07.049242Z  INFO Starting trunk 0.21.14
+2025-11-29T22:22:07.049701Z  WARN The field `address` in the configuration is deprecated and will be removed in a future version. Migrate to the `addresses` field, which allows adding more than one.
+2025-11-29T22:22:07.050308Z  INFO starting build
+trunk :    Compiling 
+ask_pete_player 
+v0.1.0 (C:\Users\Trin
+ity\Documents\daydrea
+m\Ask_Pete\apps\playe
+r)
+At line:1 char:1
++ trunk build > 
+build_error_2.log 
+2>&1
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (   Comp   
+ iling as...te\ap    
+ps\player):Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+warning: unused 
+import: `ParentRoute`
+ --> apps\player\src\
+app.rs:3:18
+  |
+3 |     components::{
+ParentRoute, Route, 
+Router, Routes},
+  |                  
+^^^^^^^^^^^
+  |
+  = note: `#[warn(unu
+sed_imports)]` (part 
+of 
+`#[warn(unused)]`) 
+on by default
+
+warning: unused 
+import: `blueprint_gr
+id_background`
+ --> apps\player\src\
+pages\student_dashboa
+rd.rs:2:5
+  |
+2 |     blueprint_gri
+d_background, chamfer
+ed_panel_classes, mec
+hanical_button_classe
+s,
+  |     ^^^^^^^^^^^^^
+^^^^^^^^^^^^
+
+error[E0308]: `if` 
+and `else` have 
+incompatible types
+  --> apps\player\src
+\components\voice_inp
+ut.rs:48:21
+   |
+45 |                 
+  {move || if 
+is_listening.get() {
+   |  _______________
+___________-
+46 | |               
+      view! { <span c
+lass="animate-pulse">
+"≡ƒÄÖ∩╕Å"</span> }
+   | |               
+      ---------------
+---------------------
+------------ 
+expected because of 
+this
+47 | |               
+  } else {
+48 | |               
+      view! { <span>"
+≡ƒÄÖ∩╕Å"</span> }
+   | |               
+      ^^^^^^^^^^^^^^^
+^^^^^^^^^^^ expected 
+`View<HtmlElement<Spa
+n, (...,), ...>>`, 
+found `View<HtmlEleme
+nt<Span, (), 
+(&str,)>>`
+49 | |               
+  }}
+   | 
+|_________________- 
+`if` and `else` have 
+incompatible types
+   |
+   = note: expected 
+struct `leptos::prelu
+de::View<leptos::html
+::HtmlElement<_, (lep
+tos::tachys::html::cl
+ass::Class<&str>,), 
+(&_,)>>`
+              found 
+struct `leptos::prelu
+de::View<leptos::html
+::HtmlElement<_, (), 
+(&_,)>>`
+   = note: this 
+error originates in 
+the macro `view` (in 
+Nightly builds, run 
+with -Z 
+macro-backtrace for 
+more info)
+
+For more information 
+about this error, 
+try `rustc --explain 
+E0308`.
+warning: 
+`ask_pete_player` 
+(lib) generated 2 
+warnings
+error: could not 
+compile 
+`ask_pete_player` 
+(lib) due to 1 
+previous error; 2 
+warnings emitted
+2025-11-29T22:22:15.272396Z ERROR error
+error from build pipeline
+
+Caused by:
+    0: HTML build pipeline failed (1 errors), showing first
+    1: error from asset pipeline
+    2: running cargo build
+    3: error during cargo build execution
+    4: cargo call to executable 'cargo' with args: '["build", "--target=wasm32-unknown-unknown", "--manifest-path", "C:\\Users\\Trinity\\Documents\\daydream\\Ask_Pete\\apps\\player\\Cargo.toml"]' returned a bad status: exit code: 101
+2025-11-29T22:22:15.272472Z ERROR error from build pipeline
+2025-11-29T22:22:15.272478Z  INFO   1: HTML build pipeline failed (1 errors), showing first
+2025-11-29T22:22:15.272483Z  INFO   2: error from asset pipeline
+2025-11-29T22:22:15.272484Z  INFO   3: running cargo build
+2025-11-29T22:22:15.272486Z  INFO   4: error during cargo build execution
+2025-11-29T22:22:15.272488Z  INFO   5: cargo call to executable 'cargo' with args: '["build", "--target=wasm32-unknown-unknown", "--manifest-path", "C:\\Users\\Trinity\\Documents\\daydream\\Ask_Pete\\apps\\player\\Cargo.toml"]' returned a bad status: exit code: 101

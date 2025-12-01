@@ -1,4 +1,4 @@
-use common::expert::StoryNode;
+use pete_core::expert::StoryNode;
 use leptos::prelude::*;
 
 #[derive(Clone, Debug, PartialEq)]

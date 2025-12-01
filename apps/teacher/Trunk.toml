@@ -12,3 +12,8 @@ backend = "http://127.0.0.1:3000/api/"
 [[proxy]]
 rewrite = "/auth/"
 backend = "http://127.0.0.1:3000/auth/"
+
+# [[hooks]]
+# stage = "build"
+# command = "cmd"
+# command_arguments = ["/c", "npx", "tailwindcss", "-i", "style/input.css", "-o", "style/output.css"]

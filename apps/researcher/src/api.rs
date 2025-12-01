@@ -98,7 +98,7 @@ pub async fn send_message(req: SendMessageRequest) -> Result<SendMessageResponse
 
 // --- Expert Module API ---
 
-use common::expert::StoryGraph;
+use pete_core::expert::StoryGraph;
 
 pub async fn get_graph() -> Result<StoryGraph, String> {
     let res = gloo_net::http::Request::get("/api/expert/graph")

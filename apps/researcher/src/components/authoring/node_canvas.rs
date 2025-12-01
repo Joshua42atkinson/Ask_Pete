@@ -6,7 +6,7 @@ use crate::components::authoring::story_node::StoryNodeComponent;
 use crate::components::authoring::template_selector::TemplateSelector;
 use crate::components::authoring::word_smithy::WordSmithy; // [NEW]
 use crate::components::toast::Toast; // [NEW]
-use common::expert::{Connection, StoryGraph, StoryNode};
+use pete_core::expert::{Connection, StoryGraph, StoryNode};
 use leptos::prelude::*;
 
 #[component]

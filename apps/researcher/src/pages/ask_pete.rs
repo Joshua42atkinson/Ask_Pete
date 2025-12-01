@@ -60,7 +60,7 @@ pub fn AskPete() -> impl IntoView {
 
                     // Navigation Deck [NEW]
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                        <a href="/yard" class="group">
+                        <a href="/tower/yard" class="group">
                             <ChamferedPanel class="bg-industrial-surface border-2 border-purdue-gold/30 p-6 h-full hover:border-purdue-gold transition-colors cursor-pointer relative overflow-hidden">
                                 <div class="absolute inset-0 bg-purdue-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <div class="flex items-center justify-between mb-2">
@@ -75,7 +75,7 @@ pub fn AskPete() -> impl IntoView {
                             </ChamferedPanel>
                         </a>
 
-                        <a href="/dashboard" class="group">
+                        <a href="/tower/dashboard" class="group">
                             <ChamferedPanel class="bg-industrial-surface border-2 border-purdue-gold/30 p-6 h-full hover:border-purdue-gold transition-colors cursor-pointer relative overflow-hidden">
                                 <div class="absolute inset-0 bg-purdue-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 <div class="flex items-center justify-between mb-2">

@@ -63,7 +63,7 @@ pub fn GettingStartedModal(
                                 <p class="text-slate-300 text-sm leading-relaxed mb-4">
                                     "Chat with a Socratic AI to reflect on your learning journey. The AI asks questions rather than giving answers."
                                 </p>
-                                <a href="/" class="inline-flex items-center text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors">
+                                <a href="/tower" class="inline-flex items-center text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors">
                                     "Start Reflecting →"
                                 </a>
                             </div>
@@ -79,7 +79,7 @@ pub fn GettingStartedModal(
                                 <p class="text-slate-300 text-sm leading-relaxed mb-4">
                                     "Create interactive narrative graphs visually. No coding required — design branching stories with nodes and connections."
                                 </p>
-                                <a href="/authoring" class="inline-flex items-center text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors">
+                                <a href="/tower/authoring" class="inline-flex items-center text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors">
                                     "Start Creating →"
                                 </a>
                             </div>
@@ -95,7 +95,7 @@ pub fn GettingStartedModal(
                                 <p class="text-slate-300 text-sm leading-relaxed mb-4">
                                     "View your reflection history and learning analytics. Track your progress and insights over time."
                                 </p>
-                                <a href="/research" class="inline-flex items-center text-green-400 hover:text-green-300 text-sm font-medium transition-colors">
+                                <a href="/tower/research" class="inline-flex items-center text-green-400 hover:text-green-300 text-sm font-medium transition-colors">
                                     "View Data →"
                                 </a>
                             </div>

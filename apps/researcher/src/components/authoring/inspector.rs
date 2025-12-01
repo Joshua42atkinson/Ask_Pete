@@ -1,5 +1,5 @@
-use common::expert::StoryNode;
-use common::models::triggers::{TriggerCondition, TriggerEffect};
+use pete_core::expert::StoryNode;
+use pete_core::models::triggers::{TriggerCondition, TriggerEffect};
 use leptos::prelude::*;
 // use wasm_bindgen::JsCast; // Unused
 

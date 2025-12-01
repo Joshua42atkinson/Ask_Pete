@@ -1,6 +1,7 @@
 pub mod ai;
 pub mod api;
 pub mod app;
+pub mod bevy_app;
 pub mod components;
 pub mod game;
 pub mod models;

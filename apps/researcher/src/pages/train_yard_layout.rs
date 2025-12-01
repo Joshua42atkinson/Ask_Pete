@@ -18,13 +18,13 @@ pub fn TrainYardLayout() -> impl IntoView {
                     </div>
 
                     <nav class="flex gap-4">
-                        <a href="/yard" class="px-4 py-2 rounded bg-slate-800 hover:bg-slate-700 transition">
+                        <a href="/tower/yard" class="px-4 py-2 rounded bg-slate-800 hover:bg-slate-700 transition">
                             "Graph Editor"
                         </a>
-                        <a href="/yard/weigh-station" class="px-4 py-2 rounded bg-slate-800 hover:bg-slate-700 transition">
+                        <a href="/tower/yard/weigh-station" class="px-4 py-2 rounded bg-slate-800 hover:bg-slate-700 transition">
                             "Weigh Station"
                         </a>
-                        <a href="/yard/library" class="px-4 py-2 rounded bg-slate-800 hover:bg-slate-700 transition">
+                        <a href="/tower/yard/library" class="px-4 py-2 rounded bg-slate-800 hover:bg-slate-700 transition">
                             "Knowledge Library"
                         </a>
                     </nav>

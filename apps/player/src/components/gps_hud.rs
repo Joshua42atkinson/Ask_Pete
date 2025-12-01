@@ -1,3 +1,4 @@
+use leptos::prelude::ClassAttribute;
 use leptos::prelude::*;
 
 #[component]
@@ -6,12 +7,26 @@ pub fn GpsHud(
     steam: ReadSignal<f32>,
     latitude: ReadSignal<f64>,
     longitude: ReadSignal<f64>,
+    current_zone: ReadSignal<Option<String>>,
 ) -> impl IntoView {
     view! {
         <div class="fixed bottom-4 right-4 bg-slate-900/90 border border-boilermaker-gold rounded-lg p-4 shadow-xl z-50 w-64 backdrop-blur-md">
             <h3 class="text-boilermaker-gold font-bold text-sm mb-2 uppercase tracking-wider border-b border-white/10 pb-1">
                 "Locomotive Telemetry"
             </h3>
+
+            // Zone Indicator
+            <div class="mb-3">
+                 <div class="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>"CURRENT ZONE"</span>
+                </div>
+                <div class="p-2 rounded bg-slate-800 border border-slate-700 text-center">
+                    {move || match current_zone.get() {
+                        Some(zone) => view! { <span class="text-green-400 font-bold animate-pulse">{zone}</span> }.into_any(),
+                        None => view! { <span class="text-slate-500 italic">"In Transit..."</span> }.into_any(),
+                    }}
+                </div>
+            </div>
 
             // Coal Gauge
             <div class="mb-3">

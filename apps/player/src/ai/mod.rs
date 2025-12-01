@@ -1,4 +1,4 @@
 pub mod airlock;
-pub mod gemma_agent;
-pub mod gemma_client;
-pub mod tokenizer;
+pub use pete_core::ai::gemma_agent;
+pub use pete_core::ai::gemma_client;
+pub use pete_core::ai::tokenizer;

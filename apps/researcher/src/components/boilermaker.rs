@@ -26,10 +26,10 @@ pub fn BoilermakerShell(children: Children) -> impl IntoView {
 
                     // Navigation
                     <nav class="hidden md:flex items-center gap-1">
-                        <NavButton href="/" label="Dashboard" />
-                        <NavButton href="/chat" label="Comms" />
-                        <NavButton href="/authoring" label="Forge" />
-                        <NavButton href="/settings" label="Config" />
+                        <NavButton href="/tower" label="Dashboard" />
+                        <NavButton href="/tower/chat" label="Comms" />
+                        <NavButton href="/tower/authoring" label="Forge" />
+                        <NavButton href="/tower/settings" label="Config" />
                     </nav>
                 </div>
             </header>

@@ -5,7 +5,7 @@ pub async fn save_reflection(
     challenge_name: String,
     reflection_text: String,
 ) -> Result<(), ServerFnError> {
-    use common::reflection::save_reflection_entry;
+    use pete_core::reflection::save_reflection_entry;
     use leptos_axum::extract;
     use sqlx::PgPool;
 
