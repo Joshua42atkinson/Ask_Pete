@@ -64,7 +64,8 @@ use domain_physics::components::{
 };
 use domain_physics::multiplayer_client::{CampaignState, MultiplayerPlugin};
 use domain_physics::systems::*;
-use infra_ai::{GemmaConfigWrapper, GemmaModel, SocraticEngine};
+use infra_ai::local_inference::{LocalConfigWrapper, LocalModel};
+use infra_ai::socratic_engine::SocraticEngine;
 use infra_db::ConversationMemory;
 use leptos::get_configuration;
 
@@ -258,7 +259,6 @@ async fn main() {
     let virtues_clone = shared_virtues.clone();
     let inbox_clone = download_inbox.clone();
 
-    /*
     thread::spawn(move || {
         run_bevy_app(
             log_clone,
@@ -271,9 +271,9 @@ async fn main() {
             campaign_clone,
             vote_inbox_clone,
             story_progress_clone,
+            quest_inbox_clone,
         )
     });
-    */
 
     let conf = get_configuration(None).await.unwrap();
     let leptos_options = conf.leptos_options;
@@ -305,16 +305,23 @@ async fn main() {
     let gemini_config = infra_ai::llm::gemini_client::GeminiConfig::default();
     let gemini_client = infra_ai::llm::gemini_client::GeminiClient::new(gemini_config);
 
-    // Initialize Shared Gemma Model (Local AI)
-    println!("Loading Gemma 3 Model...");
-    let gemma_config = GemmaConfigWrapper::default();
-    let shared_gemma_model: Option<GemmaModel> = match GemmaModel::load(gemma_config) {
+    // Initialize Shared Local Model (Llama/Mistral)
+    let model_path = std::env::var("LOCAL_MODEL_PATH")
+        .unwrap_or_else(|_| "assets/models/mistral-7b-instruct-v0.1.Q4_K_M.gguf".to_string());
+
+    let shared_local_model: Option<LocalModel> = match LocalModel::load(LocalConfigWrapper {
+        model_path: std::path::PathBuf::from(&model_path),
+        ..Default::default()
+    }) {
         Ok(model) => {
-            println!("✅ Gemma 3 Model Loaded Successfully.");
-            Some(model) // No Arc<Mutex<>> needed, it's Clone
+            println!("✅ Local AI Model Loaded Successfully from {}", model_path);
+            Some(model)
         }
         Err(e) => {
-            println!("⚠️ Failed to load Gemma 3 model: {}", e);
+            println!(
+                "⚠️ Failed to load Local AI Model from {}: {}",
+                model_path, e
+            );
             None
         }
     };
@@ -336,11 +343,15 @@ async fn main() {
         infra_ai::antigravity::AntigravityClient::new("ask-pete-dev".to_string());
     socratic_engine_instance.set_antigravity_client(antigravity_client);
 
-    // Pass shared Gemma model to Socratic Engine
-    // Pass shared Gemma model to Socratic Engine
-    // if let Some(ref model) = shared_gemma_model {
-    //     socratic_engine_instance.set_gemma_model(model.clone());
-    // }
+    // Pass shared Local model to Socratic Engine
+    if let Some(ref model) = shared_local_model {
+        socratic_engine_instance.set_local_model(model.clone());
+    }
+
+    // Pass database pool to Socratic Engine for RAG
+    if let Some(ref db_pool) = pool {
+        socratic_engine_instance.set_db_pool(db_pool.clone());
+    }
 
     let socratic_engine = Arc::new(tokio::sync::RwLock::new(socratic_engine_instance));
 
@@ -384,8 +395,8 @@ async fn main() {
         }
     };
 
-    // Initialize Weigh Station & Shared Gemma Model
-    let weigh_station = if let Some(ref model) = shared_gemma_model {
+    // Initialize Weigh Station & Shared Local Model
+    let weigh_station = if let Some(ref model) = shared_local_model {
         if let Some(db_pool) = pool.clone() {
             Some(Arc::new(tokio::sync::Mutex::new(
                 crate::handlers::weigh_station::WeighStation::new(db_pool, model.clone()),
@@ -395,7 +406,7 @@ async fn main() {
             None
         }
     } else {
-        println!("⚠️ Gemma 3 model not available, Weigh Station disabled.");
+        println!("⚠️ Local AI model not available, Weigh Station disabled.");
         None
     };
 
@@ -432,8 +443,6 @@ async fn main() {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    // ... imports ...
-
     let app = Router::new()
         .route(
             "/auth/login",
@@ -465,6 +474,9 @@ async fn main() {
         .merge(crate::routes::scenarios::scenarios_routes(&app_state))
         .merge(crate::routes::story_graphs::story_graph_routes(&app_state)) // [NEW] Story graph persistence
         .merge(crate::routes::campaign_routes::campaign_routes())
+        .merge(crate::routes::character_routes::character_routes(
+            &app_state,
+        ))
         .route(
             "/api/architect/blueprint",
             axum::routing::post(crate::handlers::architect::generate_blueprint),

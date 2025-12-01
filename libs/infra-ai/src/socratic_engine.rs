@@ -1,9 +1,11 @@
-use crate::architect::{BlueprintRequest, BlueprintResponse}; // [NEW]
+use crate::architect::{BlueprintRequest, BlueprintResponse};
+use crate::knowledge_retrieval::{format_chunks_for_prompt, retrieve_knowledge};
 use crate::prompts::PromptStrategy;
 use anyhow::Result;
 use chrono::Utc;
 use infra_db::conversation_memory::{ConversationMemory, Speaker, Turn};
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -25,9 +27,11 @@ pub struct SessionContext {
 /// Main Socratic dialogue engine
 pub struct SocraticEngine {
     gemini_client: Option<crate::llm::gemini_client::GeminiClient>,
-    gemma_model: Option<crate::local_inference::GemmaModel>,
+    local_model: Option<crate::local_inference::LocalModel>,
     antigravity_client: Option<crate::antigravity::AntigravityClient>,
+    weigh_station: Option<crate::weigh_station::WeighStation>,
     memory: Arc<ConversationMemory>,
+    db_pool: Option<PgPool>,
 }
 
 impl SocraticEngine {
@@ -35,10 +39,18 @@ impl SocraticEngine {
     pub fn new(memory: Arc<ConversationMemory>) -> Self {
         Self {
             gemini_client: None,
-            gemma_model: None,
+            local_model: None,
             antigravity_client: None,
+            weigh_station: None,
             memory,
+            db_pool: None,
         }
+    }
+
+    /// Set the database pool for RAG knowledge retrieval
+    pub fn set_db_pool(&mut self, pool: PgPool) {
+        self.db_pool = Some(pool);
+        log::info!("Database pool connected to Socratic engine for RAG");
     }
 
     /// Set the Gemini client for LLM inference
@@ -53,10 +65,14 @@ impl SocraticEngine {
         log::info!("Antigravity client connected to Socratic engine");
     }
 
-    /// Set the local Gemma model
-    pub fn set_gemma_model(&mut self, model: crate::local_inference::GemmaModel) {
-        self.gemma_model = Some(model);
-        log::info!("Local Gemma model connected to Socratic engine");
+    /// Set the local model
+    pub fn set_local_model(&mut self, model: crate::local_inference::LocalModel) {
+        // Initialize WeighStation with the model
+        let weigh_station = crate::weigh_station::WeighStation::new(model.clone());
+        self.weigh_station = Some(weigh_station);
+
+        self.local_model = Some(model);
+        log::info!("Local model connected to Socratic engine");
     }
 
     /// Generate a Socratic response to user input
@@ -87,28 +103,54 @@ impl SocraticEngine {
             history.len()
         );
 
-        // 3. Select prompting strategy based on user input
+        // 3. Retrieve relevant knowledge from RAG database
+        let knowledge_context = if let Some(ref pool) = self.db_pool {
+            match retrieve_knowledge(user_input, pool, Some(3)).await {
+                Ok(chunks) => {
+                    log::info!("Retrieved {} knowledge chunks for RAG", chunks.len());
+                    format_chunks_for_prompt(&chunks)
+                }
+                Err(e) => {
+                    log::warn!("Failed to retrieve knowledge: {}", e);
+                    String::new()
+                }
+            }
+        } else {
+            log::debug!("No database pool available for RAG retrieval");
+            String::new()
+        };
+
+        // 4. Select prompting strategy based on user input
         let strategy = PromptStrategy::select_strategy(user_input, &history);
         log::debug!("Selected strategy: {:?}", strategy);
 
-        // 4. Build prompt with template
-        let prompt = strategy.build_prompt(user_input, &history, context);
+        // 5. Build prompt with template (including RAG knowledge)
+        let mut prompt = strategy.build_prompt(user_input, &history, context);
+
+        // Inject knowledge context before user question if available
+        if !knowledge_context.is_empty() {
+            prompt = format!("{}{}", knowledge_context, prompt);
+            log::debug!(
+                "Injected {} chars of knowledge into prompt",
+                knowledge_context.len()
+            );
+        }
         log::debug!("Built prompt: {} chars", prompt.len());
 
-        // 5. Generate response using LLM
-        let response_text = if let Some(ref model) = self.gemma_model {
-            // Use local Gemma model
-            // TODO: Pass proper config
+        // 6. Generate response using LLM
+        let response_text = if let Some(ref model) = self.local_model {
+            // Use local model
             let config = crate::local_inference::GenerationConfig {
                 max_tokens: 1024,
                 temperature: 0.7,
                 top_p: 0.9,
                 repeat_penalty: 1.1,
+                seed: 42,
             };
             match model.generate(prompt.clone(), config).await {
                 Ok(text) => text,
                 Err(e) => {
-                    log::error!("Gemma generation failed: {}", e);
+                    log::error!("Local model generation failed: {}", e);
                     "I'm having trouble accessing my local memory banks.".to_string()
                 }
             }
@@ -127,10 +169,10 @@ impl SocraticEngine {
             "I'm listening. Can you tell me more about that?".to_string()
         };
 
-        // 6. Post-process response
+        // 7. Post-process response
         let processed_response = Self::post_process_response(&response_text);
 
-        // 7. Save AI's turn to memory
+        // 8. Save AI's turn to memory
         let ai_turn = Turn {
             id: Uuid::new_v4(),
             timestamp: Utc::now(),
@@ -140,7 +182,7 @@ impl SocraticEngine {
         };
         self.memory.add_turn(context.session_id, ai_turn).await?;
 
-        // 8. Generate Steam (Mastery) & Sync to Antigravity
+        // 9. Generate Steam (Mastery) & Sync to Antigravity
         // Simple heuristic: 1 Steam per successful turn
         let steam_earned = pete_core::economy::Steam(1.0);
         if let Some(ref client) = self.antigravity_client {
@@ -161,6 +203,24 @@ impl SocraticEngine {
         })
     }
 
+    /// Analyze the cognitive load of content
+    pub async fn analyze_load(
+        &self,
+        content: &str,
+    ) -> Result<pete_core::physics::CognitiveLoadProfile> {
+        if let Some(ref ws) = self.weigh_station {
+            ws.analyze_load(content).await
+        } else {
+            // Fallback if no WeighStation (no local model)
+            // Return a default safe profile
+            Ok(pete_core::physics::CognitiveLoadProfile {
+                intrinsic: 5.0,
+                extraneous: 5.0,
+                germane: 5.0,
+            })
+        }
+    }
+
     /// Generate a curriculum blueprint (StoryGraph)
     pub async fn generate_blueprint(&mut self, req: BlueprintRequest) -> Result<BlueprintResponse> {
         log::info!(
@@ -168,109 +228,18 @@ impl SocraticEngine {
             req.subject
         );
 
-        // 1. Construct the Prompt (Reusing logic from CurriculumArchitect for now)
-        // TODO: Centralize prompt construction
-        let prompt = format!(
-            r#"
-            You are the "Curriculum Architect", an expert instructional designer and storyteller.
-            
-            CONTEXT & LORE:
-            {lore_context}
+        let weigh_station = self
+            .weigh_station
+            .clone()
+            .ok_or_else(|| anyhow::anyhow!("WeighStation not available (requires local model)"))?;
 
-            GOAL: Create a non-linear learning path (StoryGraph) for the subject: "{subject}".
-            
-            CONSTRAINTS:
-            - Focus Balance: {focus} (0.0 = Pure Academic, 1.0 = Pure Narrative).
-            - Literary Device: "{device}".
-            - Required Vocabulary: {vocab:?}.
-            
-            NARRATIVE DEVICE INSTRUCTIONS:
-            {device_prompt}
-
-            OUTPUT FORMAT:
-            Return a JSON object matching this structure:
-            {{
-                "graph": {{
-                    "id": "generated_uuid",
-                    "title": "Campaign Title",
-                    "nodes": [
-                        {{
-                            "id": "node_1",
-                            "title": "Node Title",
-                            "content": "Narrative or Instructional Content",
-                            "x": 0.0,
-                            "y": 0.0,
-                            "passenger_count": 1,
-                            "complexity_level": 1,
-                            "learner_profiles": [],
-                            "gardens_active": [],
-                            "required_stats": {{}},
-                            "logic": {{
-                                "condition": "None", 
-                                "effect": "None"
-                            }}
-                        }}
-                    ],
-                    "connections": [
-                        {{
-                            "id": "conn_1",
-                            "from_node": "node_1",
-                            "to_node": "node_2"
-                        }}
-                    ]
-                }},
-                "reasoning": "Brief explanation of design choices."
-            }}
-            
-            RULES:
-            1. Create at least 5 nodes.
-            2. Ensure the graph branches (non-linear).
-            3. Integrate the vocabulary words into the node content.
-            4. Adjust 'complexity_level' based on the progression.
-            5. Use the terminology from the LORE (Sectors, Chassis, etc.) in the node titles and content where appropriate.
-            6. TREAT WORDS AS SYMBOLS OF POWER. In the Iron Network, knowing the definition of a word (like 'Velocity') is not just academic—it grants control over the environment (e.g., opening doors, powering engines).
-            7. **IMPORTANT**: Use the 'logic' field to create interactive elements.
-               - 'condition': "None", "GreaterThan {{ variable: 'Strength', value: 10.0 }}", "HasItem {{ item_id: 'Key' }}"
-               - 'effect': "None", "ModifyVariable {{ variable: 'Strength', delta: 5.0 }}", "GrantItem {{ item_id: 'Key' }}"
-            "#,
-            lore_context = crate::lore::get_lore_context(),
-            subject = req.subject,
-            focus = req.focus,
-            device = req.literary_device,
-            device_prompt = crate::lore::get_device_prompt(&req.literary_device),
-            vocab = if req.vocabulary.is_empty() {
-                crate::vocabulary::get_physics_vocabulary()
-                    .into_iter()
-                    .map(|t| format!("{}: {}", t.word, t.definition))
-                    .collect::<Vec<String>>()
-            } else {
-                req.vocabulary
-            }
+        let mut architect = crate::architect::CurriculumArchitect::new(
+            self.gemini_client.clone(),
+            self.local_model.clone(),
+            weigh_station,
         );
 
-        // 2. Generate using available model
-        let response_text = if let Some(ref model) = self.gemma_model {
-            // Use local Gemma model
-            let config = crate::local_inference::GenerationConfig {
-                max_tokens: 2048, // Higher limit for JSON
-                temperature: 0.7,
-                top_p: 0.9,
-                repeat_penalty: 1.1,
-            };
-            model.generate(prompt, config).await?
-        } else if let Some(ref mut gemini_client) = self.gemini_client {
-            gemini_client.generate(&prompt).await?
-        } else {
-            return Err(anyhow::anyhow!(
-                "No AI model available for blueprint generation"
-            ));
-        };
-
-        // 3. Parse JSON
-        let clean_json = crate::architect::extract_json(&response_text).unwrap_or(response_text);
-        let response: BlueprintResponse = serde_json::from_str(&clean_json)?;
-
-        Ok(response)
+        architect.generate_blueprint(req).await
     }
 
     /// Post-process AI response to ensure it's Socratic
