@@ -1,0 +1,75 @@
+Raw Response Text: '```json
+{
+    "graph": {
+        "id": "a7b8c9d0-e1f2-4345-b678-901234567890",
+        "title": "The Caesar Protocol: A Roman Systems Audit",
+        "nodes": [
+            {
+                "id": "node_1",
+                "title": "Sector 0: The Foundry - Chassis Calibration (The Republic)",
+                "content": "Welcome, Operator. Your mission: to understand the rise and fall of the Roman Republic. The FoundryΓÇÖs Testing Plant awaits. Strap in and calibrate your Chassis. The Anamorphic Wall displays system health. Note the 'Republic' era stress levels. What were the key pressure points that led to system failure? This is your starting point.",
+                "x": 0.0,
+                "y": 0.0,
+                "passenger_count": 1,
+                "complexity_level": 1,
+                "learner_profiles": [],
+                "gardens_active": [],
+                "required_stats": {},
+                "logic": {
+                    "condition": "None",
+                    "effect": "None"
+                }
+            },
+            {
+                "id": "node_2",
+                "title": "The Heat Sink: Legionary Logistics (Military Organization)",
+                "content": "The Republic's military machine was its strength. Examine the Legionary structure at the Heat Sink. Analyze the 'cohort' and 'maniple' systems. How did this organizational structure contribute to Rome's expansion? Be careful of the steam vents; standing in the spray will cause Scalding Damage. Define 'Legion'.",
+                "x": 2.0,
+                "y": 1.0,
+                "passenger_count": 1,
+                "complexity_level": 2,
+                "learner_profiles": [],
+                "gardens_active": [],
+                "required_stats": {},
+                "logic": {
+                    "condition": "None",
+                    "effect": "GrantItem { item_id: 'Legionary Manual' }"
+                }
+            },
+            {
+                "id": "node_3",
+                "title": "The Clock: Senate Procedures (Political Decay)",
+                "content": "The Bell Tower broadcasts the Master Clock Signal. But the Senate is notorious for Time Dilation. Investigate the Senate's operational procedures during the late Republic. How did gridlock and corruption contribute to the Republic's decline? What role did figures like Caesar play in disrupting the system's synchronization? Don't linger too long; the signal interference is strong here. Define 'Veto'.",
+                "x": 2.0,
+                "y": -1.0,
+                "passenger_count": 1,
+                "complexity_level": 3,
+                "learner_profiles": [],
+                "gardens_active": [],
+                "required_stats": {},
+                "logic": {
+                    "condition": "None",
+                    "effect": "ModifyVariable { variable: 'TimeSense', delta: -2.0 }"
+                }
+            },
+            {
+                "id": "node_4",
+                "title": "The Core: Caesar's Criticality Event (The Empire)",
+                "content": "Caesar's rise represents a Criticality EventΓÇöa massive power surge that fundamentally altered the system. Analyze his military campaigns and political maneuvers. How did he consolidate power and trigger the transition to the Roman Empire? Did he save or destroy the system? What is the definition of 'Triumvirate'?",
+                "x": 4.0,
+                "y": 0.0,
+                "passenger_count": 1,
+                "complexity_level": 4,
+                "learner_profiles": [],
+                "gardens_active": [],
+                "required_stats": {},
+                "logic": {
+                    "condition": "GreaterThan { variable: 'TimeSense', value: -1.0 }",
+                    "effect": "GrantItem { item_id: 'Imperial Edict' }"
+                }
+            },
+            {
+                "id": "node_5",
+                "title": "The Backend: Legacy Code (The Fall)",
+                "content": "Access the Backend to examine the long-term consequences of Caesar's actions. Explore the complex network of factors that contributed to the eventual decline of the Roman Empire. Was it internal decay, external pressures, or a combination of both? Be warned: 'Here be Dragons.' (Legacy Code). Root Cause Analysis Required. Define 'Inflation'
+Socratic Engine: 

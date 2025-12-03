@@ -1,0 +1,49 @@
+[package]
+name = "ask_pete_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+axum = { workspace = true, features = ["ws"] }
+chrono = { workspace = true, features = ["serde"] }
+dotenv = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sqlx = { workspace = true, features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
+tokio = { workspace = true, features = ["full"] }
+tower = { workspace = true, features = ["util"] }
+tower-http = { workspace = true, features = ["cors", "fs", "trace"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+bevy = { workspace = true, default-features = false, features = ["multi-threaded"] }
+bevy_yarnspinner = "0.3"
+uuid = { workspace = true, features = ["v4", "serde"] }
+rust-embed = { workspace = true }
+dirs = { workspace = true }
+pete_core = { package = "ask_pete_core", path = "../ask_pete_core", features = ["ssr"] }
+domain-auth = { package = "ask_pete_auth", path = "../ask_pete_auth" }
+infra-db = { package = "ask_pete_db", path = "../ask_pete_db" }
+infra-ai = { package = "ask_pete_ai", path = "../ask_pete_ai" }
+domain-physics = { package = "ask_pete_physics", path = "../ask_pete_physics" }
+domain-trainyard = { package = "ask_pete_trainyard", path = "../ask_pete_trainyard" }
+infra-services = { package = "ask_pete_services", path = "../ask_pete_services" }
+
+# Added dependencies
+lru = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
+candle-core = { workspace = true }
+candle-transformers = { workspace = true }
+tokenizers = { workspace = true }
+oauth2 = { workspace = true }
+hf-hub = { workspace = true }
+leptos = { workspace = true, features = ["ssr"] }
+futures-util = { workspace = true }
+async-trait = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+mime_guess = "2.0.5"
+
+[features]
+default = []

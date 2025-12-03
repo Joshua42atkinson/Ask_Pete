@@ -1,55 +1,91 @@
 [workspace]
-members = [
-    "backend",
-    "common",
-    "libs/client_shared",
-    "apps/researcher",
-    "apps/teacher",
-    "apps/player", "libs/client_shared",
-]
 resolver = "2"
+members = [
+    "crates/ask_pete_ai",
+    "crates/ask_pete_auth",
+    "crates/ask_pete_client",
+    "crates/ask_pete_core",
+    "crates/ask_pete_db",
+    "crates/ask_pete_frontend",
+    "crates/ask_pete_node_garden",
+    "crates/ask_pete_physics",
+    "crates/ask_pete_researcher",
+    "crates/ask_pete_server",
+    "crates/ask_pete_services",
+    "crates/ask_pete_tools",
+    "crates/ask_pete_trainyard"
+]
 
-# Defines a multi-package leptos project.
-[[workspace.metadata.leptos]]
-# The name of the project.
-name = "ask_pete"
-license = "Apache-2.0"
+[workspace.dependencies]
+# The Core Engine
+bevy = { version = "0.13", default-features = false, features = ["bevy_asset", "bevy_winit", "bevy_render", "bevy_core_pipeline", "bevy_sprite", "bevy_ui", "bevy_text", "multi-threaded"] }
+bevy_ecs = "0.13"
+bevy_defer = "0.10"
 
-# The package that contains the server binary.
-bin-package = "backend"
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+schemars = "0.8"
 
-# The package that contains the frontend wasm binary.
-lib-package = "frontend"
+# Async Runtime
+tokio = { version = "1.36", features = ["full"] }
+axum = "0.7"
+tracing = "0.1"
+futures = "0.3"
+futures-util = "0.3"
+async-trait = "0.1"
 
-# The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle.
-output-name = "ask_pete"
+# Database & Storage
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
+lancedb = "0.4"
+arrow = "50.0"
+lru = "0.12"
 
-# The site root folder is where cargo-leptos generate all output.
-site-root = "target/site"
+# Frontend
+leptos = { version = "0.8.0-rc3", features = ["csr", "nightly"] }
+leptos_router = "0.8.0-rc3"
+leptos_meta = "0.8.0-rc3"
+gloo-net = "0.5"
+gloo-timers = "0.3"
+gloo-console = "0.3"
+wasm-bindgen = "0.2.93"
+web-sys = "0.3"
+js-sys = "0.3"
 
-# The site-pkg-dir is where cargo-leptos generate the JS/WASM bundle.
-site-pkg-dir = "pkg"
+# AI
+candle-core = "0.7.1"
+candle-nn = "0.7.1"
+candle-transformers = "0.7.1"
+tokenizers = "0.19.1"
+hf-hub = "0.3.2"
 
-# The browserlist query used for optimizing the CSS.
-browserquery = "defaults"
+# Utils
+thiserror = "1.0"
+anyhow = "1.0"
+uuid = { version = "1.7", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+log = "0.4"
+reqwest = { version = "0.11", features = ["json"] }
+rand = "0.8"
+regex = "1.10"
+sha2 = "0.10"
+byteorder = "1.5"
+dotenv = "0.15"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "timeout", "catch-panic", "trace", "fs"] }
+tracing-subscriber = "0.3"
+oauth2 = "4.4"
+dirs = "5.0"
+rust-embed = "8.0"
 
-# The style file is the input for Tailwind CSS.
-style-file = "style/main.css"
+# HOT FIX PROTOCOL: The Armstrong Maneuver
+# Overriding transitive dependencies that cause diamond conflicts (e.g., winit version mismatch).
+[patch.crates-io]
+# Example: Forcing a specific winit version if Bevy and another lib disagree.
+# winit = { git = "https://github.com/rust-windowing/winit", tag = "v0.29.10" }
 
-# Assets source dir. All files found here will be copied and synchronized to site-root.
-assets-dir = "public"
+[profile.dev]
+opt-level = 1
 
-# The IP and port (ex: 127.0.0.1:3000) where the server serves the content.
-site-addr = "0.0.0.0:3000"
-
-# The port to use for automatic reload monitoring
-reload-port = 3001
-
-# The command to use when running end-to-end tests. It will run in the browser rather than headless.
-end2end-cmd = "npx playwright test"
-
-# The browser to use for end-to-end testing. Can be 'chromium', 'firefox', 'webkit' or 'all'.
-end2end-browser = "chromium"
-
-# The command to use to run tests headless
-end2end-cmd-headless = "npx playwright test"
+[profile.dev.package."*"]
+opt-level = 3 # Optimize dependencies even in dev to prevent "Lag" (Friction).

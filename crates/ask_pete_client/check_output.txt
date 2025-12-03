@@ -1,0 +1,139 @@
+warning: unused import: `once_cell::sync::Lazy`
+ --> common\src\lib.rs:8:5
+  |
+8 | use once_cell::sync::Lazy;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `common` (lib) generated 1 warning (run `cargo fix --lib -p common` to apply 1 suggestion)
+    Checking frontend v0.1.0 (C:\Users\Trinity\Documents\daydream\Day_Dream\frontend)
+error: expected identifier, found keyword `move`
+   --> frontend\src\components\authoring\node_canvas.rs:327:37
+    |
+327 |                         on_generate=move |new_nodes: Vec<StoryNode>| {
+    |                                     ^^^^ expected identifier, found keyword
+    |
+help: escape `move` to use it as an identifier
+    |
+327 |                         on_generate=r#move |new_nodes: Vec<StoryNode>| {
+    |                                     ++
+
+error: expected one of `async`, `|`, or `||`, found `}`
+   --> frontend\src\components\authoring\node_canvas.rs:324:17
+    |
+324 | /                 view! {
+325 | |                     <TemplateSelector
+326 | |                         on_close=move |_| set_show_template_selector.set(false)
+327 | |                         on_generate=move |new_nodes: Vec<StoryNode>| {
+...   |
+333 | |                     />
+334 | |                 }.into_any()
+    | |_________________^ expected one of `async`, `|`, or `||`
+    |
+    = note: this error originates in the macro `view` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: expected `,`
+   --> frontend\src\components\authoring\node_canvas.rs:324:17
+    |
+324 | /                 view! {
+325 | |                     <TemplateSelector
+326 | |                         on_close=move |_| set_show_template_selector.set(false)
+327 | |                         on_generate=move |new_nodes: Vec<StoryNode>| {
+...   |
+333 | |                     />
+334 | |                 }.into_any()
+    | |_________________^
+    |
+    = note: this error originates in the macro `view` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: invalid tag name or attribute key
+   --> frontend\src\components\authoring\node_canvas.rs:327:42
+    |
+327 |                         on_generate=move |new_nodes: Vec<StoryNode>| {
+    |                                          ^
+
+error: tokens was ignored during parsing
+   --> frontend\src\components\authoring\node_canvas.rs:327:42
+    |
+327 |                         on_generate=move |new_nodes: Vec<StoryNode>| {
+    |                                          ^
+
+error: open tag has no corresponding close tag
+   --> frontend\src\components\authoring\node_canvas.rs:325:21
+    |
+325 |                     <TemplateSelector
+    |                     ^
+
+error: ␛[1;34m[␛[0m␛[1;32mnote␛[0m␛[1;34m] ␛[0m␛[1;39mtreating all inputs after open tag as it content␛[0m
+   --> frontend\src\components\authoring\node_canvas.rs:327:68
+    |
+327 |                         on_generate=move |new_nodes: Vec<StoryNode>| {
+    |                                                                    ^
+
+error[E0425]: cannot find value `new_nodes` in this scope
+   --> frontend\src\components\authoring\node_canvas.rs:329:41
+    |
+329 | ...                   for node in new_nodes {
+    |                                   ^^^^^^^^^ help: a local variable with a similar name exists: `set_nodes`
+
+error[E0599]: no method named `unchecked_into` found for struct `EventTarget` in the current scope
+   --> frontend\src\components\authoring\node_canvas.rs:256:69
+    |
+256 | ...                   let rect = ev.target().unwrap().unchecked_into::<web_sys::Element>().get_bounding_client_rect();
+    |                                                       ^^^^^^^^^^^^^^
+    |
+   ::: C:\Users\Trinity\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasm-bindgen-0.2.105\src\cast.rs:78:8
+    |
+ 78 |     fn unchecked_into<T>(self) -> T
+    |        -------------- the method is available for `EventTarget` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `JsCast` which provides `unchecked_into` is implemented but not in scope; perhaps you want to import it
+    |
+  1 + use wasm_bindgen::JsCast;
+    |
+help: there is a method `unchecked_into_f64` with a similar name
+    |
+256 |                                     let rect = ev.target().unwrap().unchecked_into_f64::<web_sys::Element>().get_bounding_client_rect();
+    |                                                                                   ++++
+
+error[E0593]: closure is expected to take 0 arguments, but it takes 1 argument
+   --> frontend\src\components\authoring\node_canvas.rs:326:25
+    |
+326 |                         on_close=move |_| set_show_template_selector.set(false)
+    |                         ^^^^^^^^ -------- takes 1 argument
+    |                         |
+    |                         expected closure that takes 0 arguments
+    |
+    = note: required for `leptos::prelude::Callback<()>` to implement `From<{closure@frontend\src\components\authoring\node_canvas.rs:326:34: 326:42}>`
+    = note: required for `{closure@frontend\src\components\authoring\node_canvas.rs:326:34: 326:42}` to implement `Into<leptos::prelude::Callback<()>>`
+note: required by a bound in `TemplateSelectorPropsBuilder::<((), __on_generate)>::on_close`
+   --> frontend\src\components\authoring\template_selector.rs:13:1
+    |
+ 13 | #[component]
+    | ^^^^^^^^^^^^ required by this bound in `TemplateSelectorPropsBuilder::<((), __on_generate)>::on_close`
+ 14 | pub fn TemplateSelector(
+ 15 |     #[prop(into)] on_close: Callback<()>,
+    |                   -------- required by a bound in this associated function
+    = note: this error originates in the derive macro `::leptos::typed_builder_macro::TypedBuilder` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no method named `r#move` found for struct `TemplateSelectorPropsBuilder<TypedBuilderFields>` in the current scope
+   --> frontend\src\components\authoring\node_canvas.rs:327:37
+    |
+324 | /                 view! {
+325 | |                     <TemplateSelector
+326 | |                         on_close=move |_| set_show_template_selector.set(false)
+327 | |                         on_generate=move |new_nodes: Vec<StoryNode>| {
+    | |                                    -^^^^ method not found in `TemplateSelectorPropsBuilder<((leptos::prelude::Callback<()>,), ())>`
+    | |____________________________________|
+    |
+    |
+   ::: frontend\src\components\authoring\template_selector.rs:13:1
+    |
+ 13 |   #[component]
+    |   ------------ method `r#move` not found for this struct
+
+Some errors have detailed explanations: E0425, E0593, E0599.
+For more information about an error, try `rustc --explain E0425`.
+error: could not compile `frontend` (lib) due to 11 previous errors

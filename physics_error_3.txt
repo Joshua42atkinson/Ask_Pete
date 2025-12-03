@@ -1,0 +1,42 @@
+warning: C:\Users\Trinity\Documents\daydream\Ask_Pete\crates\ask_pete_client\Cargo.toml: unused manifest key: dependencies.tokio.getrandom
+    Checking ask_pete_physics v0.1.0 (C:\Users\Trinity\Documents\daydream\Ask_Pete\crates\ask_pete_physics)
+error[E0277]: the trait bound `std::collections::HashSet<std::string::String>: TypePath` is not satisfied
+   --> crates\ask_pete_physics\src\components.rs:107:21
+    |
+107 | #[derive(Component, Reflect, Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
+    |                     ^^^^^^^ the trait `TypePath` is not implemented for `std::collections::HashSet<std::string::String>`
+    |
+    = help: the following other types implement trait `TypePath`:
+              &'static T
+              &'static mut T
+              ()
+              (P0,)
+              (P1, P0)
+              (P1, P2, P0)
+              (P1, P2, P3, P0)
+              (P1, P2, P3, P4, P0)
+            and 417 others
+    = help: see issue #48214
+    = note: this error originates in the derive macro `Reflect` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `std::collections::HashSet<std::string::String>: FromReflect` is not satisfied
+   --> crates\ask_pete_physics\src\components.rs:107:21
+    |
+107 | #[derive(Component, Reflect, Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
+    |                     ^^^^^^^ the trait `FromReflect` is not implemented for `std::collections::HashSet<std::string::String>`
+    |
+    = help: the following other types implement trait `FromReflect`:
+              &'static std::path::Path
+              &'static str
+              ()
+              (A, B)
+              (A, B, C)
+              (A, B, C, D)
+              (A, B, C, D, E)
+              (A, B, C, D, E, F)
+            and 397 others
+    = help: see issue #48214
+    = note: this error originates in the derive macro `Reflect` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `ask_pete_physics` (lib) due to 10 previous errors

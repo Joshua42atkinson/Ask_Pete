@@ -1,0 +1,119 @@
+Raw Response Text: '```json
+{
+  "graph": {
+    "id": "a7b8c9d0-e1f2-46a7-b3d4-5e6f70123456",
+    "title": "The Caesar Protocol",
+    "nodes": [
+      {
+        "id": "node_1",
+        "title": "Sector 0: The Foundry - Chassis Calibration",
+        "content": "Operator, you are a fresh construct. Select your chassis. The mission: understand the rise and fall of Rome. Will you be a GUARDIAN, resisting the tides of change? Or a VANGUARD, driving Rome to new heights? Your initial 'Torque' (Knowledge) is low. Begin your journey.",
+        "x": 0.0,
+        "y": 0.0,
+        "passenger_count": 1,
+        "complexity_level": 1,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "None",
+          "effect": "None"
+        }
+      },
+      {
+        "id": "node_2",
+        "title": "The Republic: A Linker's Network",
+        "content": "The early Roman Republic was a complex network of power, not unlike a LINKER's chassis. Understanding the Senate, the Assemblies, and the Consuls is key. Define these three terms to unlock the next sector. Knowing their functions increases your 'Traction' (Understanding of Systems).",
+        "x": 2.0,
+        "y": 1.0,
+        "passenger_count": 1,
+        "complexity_level": 2,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "HasItem { item_id: 'RepublicDefinitions' }",
+          "effect": "None"
+        }
+      },
+      {
+        "id": "node_3",
+        "title": "The Heat Sink: Punic Wars - Scalding Damage",
+        "content": "The Punic Wars tested Rome's resilience. This era is a 'Heat Sink' event. The conflict with Carthage required immense resources and caused societal strain. What were the primary causes and consequences of the Punic Wars? Answering correctly will prevent 'Scalding Damage' (Knowledge Gaps).",
+        "x": 4.0,
+        "y": 0.0,
+        "passenger_count": 1,
+        "complexity_level": 3,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "HasItem { item_id: 'PunicWarsAnswer' }",
+          "effect": "None"
+        }
+      },
+      {
+        "id": "node_4",
+        "title": "The Core: Caesar - A Criticality Event",
+        "content": "Julius Caesar. A 'Criticality Event' in Roman history. His rise, his reforms, and his assassination irrevocably changed the course of the Republic. Was Caesar a savior or a destroyer of Rome? Argue for either side. Successfully arguing for either side grants a 'Torque' bonus.",
+        "x": 4.0,
+        "y": 2.0,
+        "passenger_count": 1,
+        "complexity_level": 4,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "None",
+          "effect": "ModifyVariable { variable: 'Torque', delta: 5.0 }"
+        }
+      },
+      {
+        "id": "node_5",
+        "title": "Dark Territory: The Fall - Signal Loss",
+        "content": "The Western Roman Empire crumbled. The reasons are debated. This is 'Dark Territory'. Signal towers are down. No clear path. Describe three contributing factors to the fall of Rome, relying on your 'Heuristic Processing' (Intuition). Correctly identifying the factors grants access to the 'Steam Tunnels' (Advanced Research).",
+        "x": 6.0,
+        "y": 1.0,
+        "passenger_count": 1,
+        "complexity_level": 5,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "HasItem { item_id: 'FallFactors' }",
+          "effect": "GrantItem { item_id: 'SteamTunnelAccessKey' }"
+        }
+      }
+    ],
+    "connections": [
+      {
+        "id": "conn_1",
+        "from_node": "node_1",
+        "to_node": "node_2"
+      },
+      {
+        "id": "conn_2",
+        "from_node": "node_2",
+        "to_node": "node_3"
+      },
+      {
+        "id": "conn_3",
+        "from_node": "node_2",
+        "to_node": "node_4"
+      },
+      {
+        "id": "conn_4",
+        "from_node": "node_3",
+        "to_node": "node_5"
+      },
+      {
+        "id": "conn_5",
+        "from_node": "node_4",
+        "to_node": "node_5"
+      }
+    ]
+  },
+  "reasoning": "This graph follows the Hero's Journey, starting with the call to adventure (Chassis selection) and progressing through trials (Punic Wars, Caesar's rise) to the ultimate challenge (the Fall of Rome). The narrative is balanced with instructional elements, requiring definitions and analysis at each stage. The 'logic' field creates interactive elements, simulating the Iron Network environment."
+}
+```'
+Socratic Engine: 

@@ -1,0 +1,17 @@
+[package]
+name = "ask_pete_db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sqlx = { workspace = true, features = ["runtime-tokio-rustls", "postgres", "chrono", "sqlite"] }
+lru = { workspace = true }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+chrono = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4", "serde"] }
+log = { workspace = true }
+# lancedb = "0.4" # Uncomment when ready

@@ -1,0 +1,520 @@
+﻿cargo : warning: C:\Users\
+Trinity\Documents\daydream
+\Ask_Pete\crates\ask_pete_
+client\Cargo.toml: unused 
+manifest key: dependencies
+.tokio.getrandom
+At line:1 char:1
++ cargo check -p 
+ask_pete_physics 2>&1 | 
+Out-File -Encoding utf8 
+physic ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (w  
+  arning: C:\Use...toki   
+ o.getrandom:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+    Checking 
+ask_pete_physics v0.1.0 (C
+:\Users\Trinity\Documents\
+daydream\Ask_Pete\crates\a
+sk_pete_physics)
+error[E0277]: the trait 
+bound `std::collections::H
+ashSet<std::string::String
+>: TypePath` is not 
+satisfied
+   --> crates\ask_pete_phy
+sics\src\components.rs:107
+:21
+    |
+107 | #[derive(Component, 
+Reflect, Default, Clone, 
+Debug, PartialEq, 
+Serialize, Deserialize)]
+    |                     
+^^^^^^^ the trait 
+`TypePath` is not 
+implemented for `std::coll
+ections::HashSet<std::stri
+ng::String>`
+    |
+note: there are multiple 
+different versions of 
+crate `bevy_reflect` in 
+the dependency graph
+   --> C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_reflect-0.13.2\src\typ
+e_path.rs:82:1
+    |
+ 82 | pub trait TypePath: 
+'static {
+    | ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^ this is the 
+required trait
+    |
+   ::: crates\ask_pete_phy
+sics\src\components.rs:1:5
+    |
+  1 | use 
+bevy::prelude::Resource;
+    |     ---- one 
+version of crate 
+`bevy_reflect` used here, 
+as a dependency of crate 
+`bevy_ecs`
+    |
+   ::: crates\ask_pete_phy
+sics\src\systems.rs:3:5
+    |
+  3 | use bevy_yarnspinner
+::events::{DialogueComplet
+eEvent, 
+ExecuteCommandEvent};
+    |     
+---------------- one 
+version of crate 
+`bevy_reflect` used here, 
+as a dependency of crate 
+`bevy_ecs`
+    |
+   ::: C:\Users\Trinity\.r
+ustup\toolchains\stable-x8
+6_64-pc-windows-msvc\lib/r
+ustlib/src/rust\library\st
+d\src\collections\hash\set
+.rs:125:1
+    |
+125 | pub struct 
+HashSet<T, S = 
+RandomState> {
+    | --------------------
+------------------ this 
+type doesn't implement 
+the required trait
+    |
+   ::: C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_reflect-0.14.2\src\arr
+ay.rs:47:1
+    |
+ 47 | pub trait Array: 
+Reflect {
+    | 
+------------------------ 
+this is the found trait
+    = help: you can use 
+`cargo tree` to explore 
+your dependency tree
+    = help: see issue 
+#48214
+    = note: this error 
+originates in the derive 
+macro `Reflect` (in 
+Nightly builds, run with 
+-Z macro-backtrace for 
+more info)
+
+error[E0277]: the trait 
+bound `std::collections::H
+ashSet<std::string::String
+>: FromReflect` is not 
+satisfied
+   --> crates\ask_pete_phy
+sics\src\components.rs:107
+:21
+    |
+107 | #[derive(Component, 
+Reflect, Default, Clone, 
+Debug, PartialEq, 
+Serialize, Deserialize)]
+    |                     
+^^^^^^^ the trait 
+`FromReflect` is not 
+implemented for `std::coll
+ections::HashSet<std::stri
+ng::String>`
+    |
+note: there are multiple 
+different versions of 
+crate `bevy_reflect` in 
+the dependency graph
+   --> C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_reflect-0.13.2\src\fro
+m_reflect.rs:24:1
+    |
+ 24 | pub trait 
+FromReflect: Reflect + 
+Sized {
+    | ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^ this 
+is the required trait
+    |
+   ::: crates\ask_pete_phy
+sics\src\components.rs:1:5
+    |
+  1 | use 
+bevy::prelude::Resource;
+    |     ---- one 
+version of crate 
+`bevy_reflect` used here, 
+as a dependency of crate 
+`bevy_ecs`
+    |
+   ::: crates\ask_pete_phy
+sics\src\systems.rs:3:5
+    |
+  3 | use bevy_yarnspinner
+::events::{DialogueComplet
+eEvent, 
+ExecuteCommandEvent};
+    |     
+---------------- one 
+version of crate 
+`bevy_reflect` used here, 
+as a dependency of crate 
+`bevy_ecs`
+    |
+   ::: C:\Users\Trinity\.r
+ustup\toolchains\stable-x8
+6_64-pc-windows-msvc\lib/r
+ustlib/src/rust\library\st
+d\src\collections\hash\set
+.rs:125:1
+    |
+125 | pub struct 
+HashSet<T, S = 
+RandomState> {
+    | --------------------
+------------------ this 
+type doesn't implement 
+the required trait
+    |
+   ::: C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_reflect-0.14.2\src\arr
+ay.rs:47:1
+    |
+ 47 | pub trait Array: 
+Reflect {
+    | 
+------------------------ 
+this is the found trait
+    = help: you can use 
+`cargo tree` to explore 
+your dependency tree
+    = help: see issue 
+#48214
+    = note: this error 
+originates in the derive 
+macro `Reflect` (in 
+Nightly builds, run with 
+-Z macro-backtrace for 
+more info)
+
+error[E0277]: the trait 
+bound 
+`DialogueCompleteEvent: 
+bevy::prelude::Event` is 
+not satisfied
+   --> crates\ask_pete_phy
+sics\src\systems.rs:88:17
+    |
+ 88 |     mut events: Even
+tReader<DialogueCompleteEv
+ent>,
+    |                 ^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^ the trait 
+`bevy::prelude::Event` is 
+not implemented for 
+`DialogueCompleteEvent`
+    |
+note: there are multiple 
+different versions of 
+crate `bevy_ecs` in the 
+dependency graph
+   --> C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_ecs-0.13.2\src\event.r
+s:22:1
+    |
+ 22 | pub trait Event: 
+Send + Sync + 'static {}
+    | ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^ this 
+is the required trait
+    |
+   ::: crates\ask_pete_phy
+sics\src\components.rs:1:5
+    |
+  1 | use 
+bevy::prelude::Resource;
+    |     ---- one 
+version of crate 
+`bevy_ecs` used here, as 
+a dependency of crate 
+`bevy_app`
+    |
+   ::: crates\ask_pete_phy
+sics\src\systems.rs:3:5
+    |
+  3 | use bevy_yarnspinner
+::events::{DialogueComplet
+eEvent, 
+ExecuteCommandEvent};
+    |     
+---------------- one 
+version of crate 
+`bevy_ecs` used here, as 
+a dependency of crate 
+`bevy_app`
+    |
+   ::: C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_yarnspinner-0.3.1\src\
+dialogue_runner\events.rs:
+94:1
+    |
+ 94 | pub struct 
+DialogueCompleteEvent {
+    | --------------------
+------------ this type 
+doesn't implement the 
+required trait
+    |
+   ::: C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_ecs-0.14.2\src\archety
+pe.rs:129:1
+    |
+129 | pub(crate) trait 
+BundleComponentStatus {
+    | --------------------
+------------------ this 
+is the found trait
+    = help: you can use 
+`cargo tree` to explore 
+your dependency tree
+note: required by a bound 
+in `bevy::prelude::EventRe
+ader`
+   --> C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_ecs-0.13.2\src\event.r
+s:419:35
+    |
+419 | pub struct 
+EventReader<'w, 's, E: 
+Event> {
+    |                     
+              ^^^^^ 
+required by this bound in 
+`EventReader`
+
+error[E0277]: the trait 
+bound 
+`ExecuteCommandEvent: 
+bevy::prelude::Event` is 
+not satisfied
+   --> crates\ask_pete_phy
+sics\src\systems.rs:89:25
+    |
+ 89 |     mut 
+command_events: EventReade
+r<ExecuteCommandEvent>,
+    |                     
+    ^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^ the trait 
+`bevy::prelude::Event` is 
+not implemented for 
+`ExecuteCommandEvent`
+    |
+note: there are multiple 
+different versions of 
+crate `bevy_ecs` in the 
+dependency graph
+   --> C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_ecs-0.13.2\src\event.r
+s:22:1
+    |
+ 22 | pub trait Event: 
+Send + Sync + 'static {}
+    | ^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^ this 
+is the required trait
+    |
+   ::: crates\ask_pete_phy
+sics\src\components.rs:1:5
+    |
+  1 | use 
+bevy::prelude::Resource;
+    |     ---- one 
+version of crate 
+`bevy_ecs` used here, as 
+a dependency of crate 
+`bevy_app`
+    |
+   ::: crates\ask_pete_phy
+sics\src\systems.rs:3:5
+    |
+  3 | use bevy_yarnspinner
+::events::{DialogueComplet
+eEvent, 
+ExecuteCommandEvent};
+    |     
+---------------- one 
+version of crate 
+`bevy_ecs` used here, as 
+a dependency of crate 
+`bevy_app`
+    |
+   ::: C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_yarnspinner-0.3.1\src\
+dialogue_runner\events.rs:
+46:1
+    |
+ 46 | pub struct 
+ExecuteCommandEvent {
+    | --------------------
+---------- this type 
+doesn't implement the 
+required trait
+    |
+   ::: C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_ecs-0.14.2\src\archety
+pe.rs:129:1
+    |
+129 | pub(crate) trait 
+BundleComponentStatus {
+    | --------------------
+------------------ this 
+is the found trait
+    = help: you can use 
+`cargo tree` to explore 
+your dependency tree
+note: required by a bound 
+in `bevy::prelude::EventRe
+ader`
+   --> C:\Users\Trinity\.c
+argo\registry\src\index.cr
+ates.io-1949cf8c6b5b557f\b
+evy_ecs-0.13.2\src\event.r
+s:419:35
+    |
+419 | pub struct 
+EventReader<'w, 's, E: 
+Event> {
+    |                     
+              ^^^^^ 
+required by this bound in 
+`EventReader`
+
+error[E0599]: the method 
+`read` exists for struct `
+bevy::prelude::EventReader
+<'_, '_, 
+DialogueCompleteEvent>`, 
+but its trait bounds were 
+not satisfied
+  --> crates\ask_pete_phys
+ics\src\systems.rs:93:26
+   |
+93 |     for _event in 
+events.read() {
+   |                      
+    ^^^^ method cannot be 
+called due to unsatisfied 
+trait bounds
+   |
+  ::: C:\Users\Trinity\.ca
+rgo\registry\src\index.cra
+tes.io-1949cf8c6b5b557f\be
+vy_yarnspinner-0.3.1\src\d
+ialogue_runner\events.rs:9
+4:1
+   |
+94 | pub struct 
+DialogueCompleteEvent {
+   | ---------------------
+----------- doesn't 
+satisfy 
+`DialogueCompleteEvent: 
+bevy::prelude::Event`
+   |
+   = note: the following 
+trait bounds were not 
+satisfied:
+           
+`DialogueCompleteEvent: 
+bevy::prelude::Event`
+
+error[E0599]: the method 
+`read` exists for struct `
+bevy::prelude::EventReader
+<'_, '_, 
+ExecuteCommandEvent>`, 
+but its trait bounds were 
+not satisfied
+  --> crates\ask_pete_phys
+ics\src\systems.rs:99:33
+   |
+99 |     for event in 
+command_events.read() {
+   |                      
+           ^^^^ method 
+cannot be called due to 
+unsatisfied trait bounds
+   |
+  ::: C:\Users\Trinity\.ca
+rgo\registry\src\index.cra
+tes.io-1949cf8c6b5b557f\be
+vy_yarnspinner-0.3.1\src\d
+ialogue_runner\events.rs:4
+6:1
+   |
+46 | pub struct 
+ExecuteCommandEvent {
+   | ---------------------
+--------- doesn't satisfy 
+`ExecuteCommandEvent: 
+bevy::prelude::Event`
+   |
+   = note: the following 
+trait bounds were not 
+satisfied:
+           
+`ExecuteCommandEvent: 
+bevy::prelude::Event`
+
+Some errors have detailed 
+explanations: E0277, 
+E0599.
+For more information 
+about an error, try 
+`rustc --explain E0277`.
+error: could not compile 
+`ask_pete_physics` (lib) 
+due to 14 previous errors

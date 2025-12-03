@@ -1,0 +1,98 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Train Yard Web Styles */
+.app-container {
+  width: 100vw;
+  height: 100vh;
+}
+
+.export-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 100;
+  padding: 10px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.dialogue-node-container {
+  border: 1px solid #777;
+  padding: 10px;
+  border-radius: 5px;
+  background: #fff;
+  min-width: 200px;
+  color: #333;
+}
+
+.dialogue-header {
+  font-weight: bold;
+  margin-bottom: 5px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.dialogue-text {
+  font-size: 12px;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+
+.choice-item {
+  position: relative;
+  padding: 5px;
+  background: #f0f0f0;
+  margin-top: 5px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.choice-handle {
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  right: -5px !important;
+}

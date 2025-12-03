@@ -1,0 +1,156 @@
+/* ========================================
+   Boilermaker Industrial Design System
+   Ask Pete - Purdue Expert Tuition Engine
+   ======================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base Layer - Typography */
+@layer base {
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    background-color: #1A1A1A;
+    /* coal-dark */
+    color: #F0F0F0;
+    /* steam-white */
+  }
+
+  body {
+    --purdue-gold: #CFB991;
+    --purdue-black: #000000;
+    --aged-gold: #8E6F3E;
+    --dust-gold: #EBD99F;
+    --coal-dark: #1A1A1A;
+    --iron-gray: #2D2D2D;
+    --steam-white: #F0F0F0;
+    --old-gold: #CFB991;
+  }
+}
+
+@layer components {
+  .text-metallic-gold {
+    background: linear-gradient(135deg, #8E6F3E 0%, #CFB991 40%, #EBD99F 50%, #CFB991 60%, #8E6F3E 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3);
+    font-weight: 700;
+  }
+
+  /* Chamfered Corners - Industrial Cut Edges */
+  .chamfered-corners {
+    clip-path: polygon(8px 0%, calc(100% - 8px) 0%,
+        100% 8px, 100% calc(100% - 8px),
+        calc(100% - 8px) 100%, 8px 100%,
+        0% calc(100% - 8px), 0% 8px);
+  }
+
+  /* Mechanical Buttons */
+  .mechanical-button-primary {
+    @apply px-6 py-3 font-bold uppercase tracking-wide transition-all duration-200 chamfered-corners border-2;
+    @apply bg-purdue-gold text-black border-purdue-gold;
+    @apply hover:bg-steam-white hover:shadow-lg hover:shadow-purdue-gold/50 active:scale-95;
+  }
+
+  .mechanical-button-secondary {
+    @apply px-6 py-3 font-bold uppercase tracking-wide transition-all duration-200 chamfered-corners border-2;
+    @apply bg-transparent text-purdue-gold border-purdue-gold;
+    @apply hover:bg-purdue-gold/10 hover:shadow-lg hover:shadow-purdue-gold/30 active:scale-95;
+  }
+
+  .mechanical-button-danger {
+    @apply px-6 py-3 font-bold uppercase tracking-wide transition-all duration-200 chamfered-corners border-2;
+    @apply bg-signal-red text-white border-signal-red;
+    @apply hover:bg-red-600 hover:shadow-lg hover:shadow-signal-red/50 active:scale-95;
+  }
+
+  .mechanical-button-success {
+    @apply px-6 py-3 font-bold uppercase tracking-wide transition-all duration-200 chamfered-corners border-2;
+    @apply bg-gauge-green text-white border-gauge-green;
+    @apply hover:bg-green-600 hover:shadow-lg hover:shadow-gauge-green/50 active:scale-95;
+  }
+
+  /* Pressure Gauge */
+  .pressure-gauge {
+    @apply relative w-full h-8 border-2 border-purdue-gold chamfered-corners overflow-hidden;
+  }
+
+  .pressure-gauge-fill {
+    @apply absolute top-0 left-0 h-full bg-gradient-to-r from-purdue-gold to-dust-gold;
+    @apply transition-all duration-500 ease-out shadow-lg shadow-purdue-gold/50;
+  }
+
+  /* Boilermaker Panel */
+  .boilermaker-panel {
+    @apply p-6 chamfered-corners relative;
+  }
+
+  /* Blueprint Grid Background */
+  .blueprint-grid {
+    background-image:
+      linear-gradient(to right, rgba(142, 111, 62, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(142, 111, 62, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Dispatcher Grid Layout */
+  .dispatcher-grid {
+    display: grid;
+    height: 100vh;
+    width: 100vw;
+    grid-template-columns: 64px 1fr 300px;
+    grid-template-rows: 50px 1fr;
+    grid-template-areas:
+      "header header header"
+      "nav    main   props";
+  }
+
+  .grid-header {
+    grid-area: header;
+    background-color: #2D2D2D;
+    border-bottom: 2px solid #8E6F3E;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+  }
+
+  .grid-sidebar {
+    grid-area: nav;
+    background-color: #1A1A1A;
+    border-right: 1px solid #2D2D2D;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .grid-main {
+    grid-area: main;
+    background-color: #222;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .grid-properties {
+    grid-area: props;
+    background-color: #2D2D2D;
+    border-left: 1px solid #8E6F3E;
+    padding: 10px;
+  }
+
+  /* Glass Panel with Glassmorphism */
+  .glass-panel {
+    background: rgba(45, 45, 45, 0.85);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(207, 185, 145, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+}

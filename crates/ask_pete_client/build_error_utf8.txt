@@ -1,0 +1,60 @@
+﻿2025-11-29T22:15:17.548358Z  INFO Starting trunk 0.21.14
+2025-11-29T22:15:17.548780Z  WARN The field `address` in the configuration is deprecated and will be removed in a future version. Migrate to the `addresses` field, which allows adding more than one.
+2025-11-29T22:15:17.549093Z  INFO starting build
+trunk :    Compiling 
+ask_pete_player 
+v0.1.0 (C:\Users\Trin
+ity\Documents\daydrea
+m\Ask_Pete\apps\playe
+r)
+At line:1 char:1
++ trunk build > 
+build_error.log 2>&1
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (   Comp   
+ iling as...te\ap    
+ps\player):Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+error: this file 
+contains an unclosed 
+delimiter
+   --> apps\player\sr
+c\app.rs:210:7
+    |
+ 16 | pub fn App() 
+-> impl IntoView {
+    |                
+               - 
+unclosed delimiter
+...
+210 |     }
+    |      ^
+
+error: could not 
+compile 
+`ask_pete_player` 
+(lib) due to 1 
+previous error
+2025-11-29T22:15:19.094951Z ERROR error
+error from build pipeline
+
+Caused by:
+    0: HTML build pipeline failed (1 errors), showing first
+    1: error from asset pipeline
+    2: running cargo build
+    3: error during cargo build execution
+    4: cargo call to executable 'cargo' with args: '["build", "--target=wasm32-unknown-unknown", "--manifest-path", "C:\\Users\\Trinity\\Documents\\daydream\\Ask_Pete\\apps\\player\\Cargo.toml"]' returned a bad status: exit code: 101
+2025-11-29T22:15:19.095042Z ERROR error from build pipeline
+2025-11-29T22:15:19.095050Z  INFO   1: HTML build pipeline failed (1 errors), showing first
+2025-11-29T22:15:19.095055Z  INFO   2: error from asset pipeline
+2025-11-29T22:15:19.095058Z  INFO   3: running cargo build
+2025-11-29T22:15:19.095060Z  INFO   4: error during cargo build execution
+2025-11-29T22:15:19.095063Z  INFO   5: cargo call to executable 'cargo' with args: '["build", "--target=wasm32-unknown-unknown", "--manifest-path", "C:\\Users\\Trinity\\Documents\\daydream\\Ask_Pete\\apps\\player\\Cargo.toml"]' returned a bad status: exit code: 101
