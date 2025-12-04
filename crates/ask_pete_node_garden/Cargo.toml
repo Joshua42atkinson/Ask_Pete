@@ -1,0 +1,47 @@
+[package]
+name = "ask_pete_node_garden"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+
+leptos = { workspace = true, features = ["nightly", "csr"] }
+leptos_router = { workspace = true }
+leptos_meta = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+wasm-bindgen = { workspace = true }
+gloo-net = { workspace = true }
+gloo-timers = { workspace = true }
+gloo-console = { workspace = true }
+web-sys = { workspace = true, features = ["console", "Window", "Document", "HtmlDocument", "HtmlElement", "Element", "Node", "DomRect", "Storage"] }
+anyhow = { workspace = true }
+uuid = { workspace = true, features = ["v4", "serde"] }
+chrono = { workspace = true, features = ["serde"] }
+reqwest = { workspace = true, features = ["json"] }
+sha2 = { workspace = true }
+log = { workspace = true }
+js-sys = { workspace = true }
+wasm-bindgen-futures = "0.4"
+
+# Trinity Libraries
+pete_core = { package = "ask_pete_core", path = "../ask_pete_core" }
+domain-trainyard = { package = "ask_pete_trainyard", path = "../ask_pete_trainyard" }
+domain-physics = { package = "ask_pete_physics", path = "../ask_pete_physics" }
+ask_pete_client = { package = "ask_pete_client", path = "../ask_pete_client" }
+ask_pete_tools = { package = "ask_pete_tools", path = "../ask_pete_tools" }
+ask_pete_researcher = { package = "ask_pete_researcher", path = "../ask_pete_researcher" }
+ask_pete_frontend = { package = "ask_pete_frontend", path = "../ask_pete_frontend" }
+console_log = "1.0"
+console_error_panic_hook = "0.1"
+
+[features]
+hydrate = ["leptos/hydrate"]
+ssr = [
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+]

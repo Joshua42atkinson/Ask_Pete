@@ -1,0 +1,170 @@
+use bevy::prelude::*;
+use domain_physics::components::*;
+use domain_physics::systems::*;
+use std::time::Duration;
+
+#[test]
+fn test_calculate_train_velocity_normal() {
+    // 1. Setup App
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins);
+    app.add_event::<StallEvent>(); // Register the event
+    app.add_systems(Update, calculate_train_velocity);
+
+    // Initialize Time
+    let mut time = Time::default();
+    time.update();
+    app.insert_resource(time);
+
+    // 2. Spawn Entity
+    let entity = app
+        .world_mut()
+        .spawn((
+            LocomotiveStats {
+                traction: 100, // Power
+                velocity: 50,
+                efficiency: 20, // Factor 1.0
+                analysis: 10,
+                signaling: 10,
+                coupling: 10,
+            },
+            FuelTank {
+                current_coal: 10.0,
+                current_steam: 0.0,
+                max_capacity: 100.0,
+            },
+            CargoHold {
+                items: vec![],
+                capacity: 7,
+            },
+            TrackGradient { slope: 0.0 }, // Flat track
+            TrainVelocity(0.0),
+            CognitiveLoad::default(),
+        ))
+        .id();
+
+    // 3. Advance Time and Run Systems
+    app.world_mut()
+        .resource_mut::<Time>()
+        .advance_by(Duration::from_secs_f32(1.0));
+    app.world_mut().run_schedule(Update);
+
+    // 4. Verify Results
+    let velocity = app.world().get::<TrainVelocity>(entity).unwrap();
+    let fuel = app.world().get::<FuelTank>(entity).unwrap();
+
+    // Power Output = Traction (100) * Efficiency (20/20 = 1.0) = 100.0
+    // Resistance = Gradient (0.0) * Mass (10.0) = 0.0
+    // Target Velocity = Power / Resistance... wait, division by zero in logic?
+    // Logic says: if resistance > 0.0 { power / resistance } else { power }
+    // So Target = 100.0
+    // Velocity lerps to target: 0.0 lerp 100.0 by 0.1 = 10.0
+
+    assert_eq!(velocity.0, 10.0, "Velocity should lerp to target");
+
+    // Burn Rate = (Resistance * Speed * 0.1).max(0.1) * dt
+    // Resistance is 0.0, so burn rate is 0.1 * 1.0 = 0.1
+    // Initial coal 10.0, should be 9.9
+    assert!(fuel.current_coal < 10.0, "Coal should be consumed");
+    assert!(
+        (fuel.current_coal - 9.9).abs() < 0.001,
+        "Coal consumption incorrect"
+    );
+}
+
+#[test]
+fn test_calculate_train_velocity_out_of_fuel() {
+    // 1. Setup App
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins);
+    app.add_event::<StallEvent>();
+    app.add_systems(Update, calculate_train_velocity);
+
+    let mut time = Time::default();
+    time.update();
+    app.insert_resource(time);
+
+    // 2. Spawn Entity with 0 Coal
+    let entity = app
+        .world_mut()
+        .spawn((
+            LocomotiveStats {
+                traction: 100,
+                velocity: 50,
+                efficiency: 20,
+                analysis: 10,
+                signaling: 10,
+                coupling: 10,
+            },
+            FuelTank {
+                current_coal: 0.0,
+                current_steam: 0.0,
+                max_capacity: 100.0,
+            },
+            CargoHold::default(),
+            TrackGradient::default(),
+            TrainVelocity(50.0), // Moving initially
+            CognitiveLoad::default(),
+        ))
+        .id();
+
+    // 3. Advance Time and Run Systems
+    app.world_mut()
+        .resource_mut::<Time>()
+        .advance_by(Duration::from_secs_f32(1.0));
+    app.world_mut().run_schedule(Update);
+
+    // 4. Verify Results
+    let velocity = app.world().get::<TrainVelocity>(entity).unwrap();
+    let load = app.world().get::<CognitiveLoad>(entity).unwrap();
+
+    // Should stop immediately if out of fuel
+    assert_eq!(velocity.0, 0.0, "Velocity should be 0 when out of fuel");
+
+    // Extraneous load should increase (Panic)
+    assert!(
+        load.extraneous > 0.0,
+        "Extraneous load should increase when stalled"
+    );
+}
+
+#[test]
+fn test_generate_steam() {
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins);
+    app.add_systems(Update, generate_steam);
+
+    let mut time = Time::default();
+    time.update();
+    app.insert_resource(time);
+
+    let entity = app
+        .world_mut()
+        .spawn((
+            TrainVelocity(10.0),
+            FuelTank {
+                current_coal: 10.0,
+                current_steam: 0.0,
+                max_capacity: 100.0,
+            },
+        ))
+        .id();
+
+    // Advance Time and Run Systems
+    app.world_mut()
+        .resource_mut::<Time>()
+        .advance_by(Duration::from_secs_f32(1.0));
+    app.world_mut().run_schedule(Update);
+
+    let fuel = app.world().get::<FuelTank>(entity).unwrap();
+
+    // Steam = Velocity * Time * 0.1 = 10.0 * 1.0 * 0.1 = 1.0
+    assert!(
+        fuel.current_steam > 0.0,
+        "Steam should be generated when moving"
+    );
+    assert!(
+        (fuel.current_steam - 1.0).abs() < 0.001,
+        "Steam generation incorrect"
+    );
+}

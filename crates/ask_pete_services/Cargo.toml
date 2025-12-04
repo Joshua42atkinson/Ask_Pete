@@ -1,0 +1,21 @@
+[package]
+name = "ask_pete_services"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+anyhow = { workspace = true }
+log = { workspace = true }
+reqwest = { workspace = true, features = ["json", "stream"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+futures-util = { workspace = true }
+hf-hub = { workspace = true }
+dirs = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+axum = { workspace = true }
+sqlx = { workspace = true, features = ["runtime-tokio-rustls", "postgres", "chrono"] }
+tracing = { workspace = true }
+pete_core = { package = "ask_pete_core", path = "../ask_pete_core" }

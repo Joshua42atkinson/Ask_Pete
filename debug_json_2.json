@@ -1,0 +1,140 @@
+Raw Response Text: '```json
+{
+  "graph": {
+    "id": "a7f9b2d3-4e6a-4b8c-9d0f-1234567890ab",
+    "title": "The Caesar Protocol: A Hero's Journey Through Rome",
+    "nodes": [
+      {
+        "id": "node_1",
+        "title": "Sector 0: The Foundry - Chassis Calibration",
+        "content": "Welcome, Operator! The Anamorphic Wall displays the sprawling landscape of Ancient Rome, a complex network ripe for analysis. To begin, select your Chassis. Consider this: Will you be a GUARDIAN, a VANGUARD, or a LINKER? Your choice will determine your initial approach to understanding Rome's rise and fall. Prepare for the 'Torque' tests!",
+        "x": 0.0,
+        "y": 0.0,
+        "passenger_count": 1,
+        "complexity_level": 1,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "None",
+          "effect": "None"
+        }
+      },
+      {
+        "id": "node_2",
+        "title": "The Rubicon: Crossing into the Republic (Vanguard Path)",
+        "content": "VANGUARD Operators only! Your high RPM allows for rapid ascent. The Rubicon River represents a critical decision point in Roman history. Crossing it meant defying the Senate. Define 'Republic' using the data available. Successfully defining 'Republic' grants you +5 Traction. Failure results in -2 Traction.",
+        "x": 2.0,
+        "y": 1.0,
+        "passenger_count": 1,
+        "complexity_level": 2,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "None",
+          "effect": "ModifyVariable { variable: 'Traction', delta: 5.0 }"
+        }
+      },
+      {
+        "id": "node_3",
+        "title": "The Senate: Damping the Chaos (Guardian Path)",
+        "content": "GUARDIAN Operators only! Your high mass and low center of gravity are ideal for navigating political instability. The Roman Senate was a body meant to 'damp' the chaotic impulses of the populace. Research the structure of the Senate. Identifying 3 key senatorial roles grants 'Senate Seal,' unlocking the 'Law & Order' Module. The Senate Seal grants +5 Armor.",
+        "x": 2.0,
+        "y": -1.0,
+        "passenger_count": 1,
+        "complexity_level": 2,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "None",
+          "effect": "GrantItem { item_id: 'Senate Seal' }"
+        }
+      },
+      {
+        "id": "node_4",
+        "title": "The Colosseum: Bread & Circuses (All Chassis)",
+        "content": "The Colosseum represents a critical component of Roman social control: 'Bread and Circuses.' Analyze the political motivations behind providing entertainment. Identifying the primary and secondary objectives grants +3 Intellect. Failing to identify both results in -2 Intellect.",
+        "x": 4.0,
+        "y": 0.0,
+        "passenger_count": 1,
+        "complexity_level": 3,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "None",
+          "effect": "ModifyVariable { variable: 'Intellect', delta: 3.0 }"
+        }
+      },
+      {
+        "id": "node_5",
+        "title": "Caesar's Gambit: The Ides of March (All Chassis)",
+        "content": "The assassination of Caesar marks a turning point. What were the primary motivations of the conspirators? Understanding the power vacuum created by Caesar's death requires high intellect. If Intellect is above 10, gain the 'Legacy of Caesar' buff (+5 to all stats). Otherwise, suffer 'Political Instability' (-3 to all stats).",
+        "x": 6.0,
+        "y": 0.0,
+        "passenger_count": 1,
+        "complexity_level": 4,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "GreaterThan { variable: 'Intellect', value: 10.0 }",
+          "effect": "ModifyVariable { variable: 'Strength', delta: 5.0 }"
+        }
+      },
+      {
+        "id": "node_6",
+        "title": "The Fall: Entropy & Decay (All Chassis)",
+        "content": "The Roman Empire, once a symbol of order, eventually succumbed to entropy. Analyze the factors contributing to the decline. Understanding the concept of 'entropy' is critical. Define 'Entropy' to unlock the 'Thermodynamics of History' module.",
+        "x": 8.0,
+        "y": 0.0,
+        "passenger_count": 1,
+        "complexity_level": 5,
+        "learner_profiles": [],
+        "gardens_active": [],
+        "required_stats": {},
+        "logic": {
+          "condition": "None",
+          "effect": "GrantItem { item_id: 'Thermodynamics of History' }"
+        }
+      }
+    ],
+    "connections": [
+      {
+        "id": "conn_1",
+        "from_node": "node_1",
+        "to_node": "node_2"
+      },
+      {
+        "id": "conn_2",
+        "from_node": "node_1",
+        "to_node": "node_3"
+      },
+      {
+        "id": "conn_3",
+        "from_node": "node_2",
+        "to_node": "node_4"
+      },
+      {
+        "id": "conn_4",
+        "from_node": "node_3",
+        "to_node": "node_4"
+      },
+      {
+        "id": "conn_5",
+        "from_node": "node_4",
+        "to_node": "node_5"
+      },
+      {
+        "id": "conn_6",
+        "from_node": "node_5",
+        "to_node": "node_6"
+      }
+    ]
+  },
+  "reasoning": "This graph creates a non-linear learning path, allowing different Chassis configurations to approach the material from different angles. The Hero's Journey is represented by the progression from basic understanding (The Foundry) to facing challenges (Rubicon, Senate) and ultimately understanding the fall of the empire. The vocabulary words 'Rome' and 'Caesar' are integrated into the narrative. The 'logic' fields create interactive elements, rewarding understanding and penalizing failure, thus encouraging deeper engagement with the material."
+}
+```'
+Socratic Engine: 

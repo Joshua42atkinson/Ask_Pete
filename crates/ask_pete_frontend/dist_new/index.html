@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ask Pete | Sovereign Gamutainment</title>
+  <meta name="description" content="Welcome to the Forge. Pete is your Socratic Conductor for engineering knowledge.">
+
+  <!-- Boilermaker Industrial Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/output-785c63ed4e73b352.css" integrity="sha384-o1HiVNznK/GYBpVIr9avWhWWtUtHn19MwqPdUFPIhC07hhoXX9Va8HA93Ly+pmKf"/>
+  
+<script type="module">
+import init, * as bindings from '/ask_pete_frontend-5c98cad178d6a602.js';
+const wasm = await init({ module_or_path: '/ask_pete_frontend-5c98cad178d6a602_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+  </style>
+<link rel="modulepreload" href="/ask_pete_frontend-5c98cad178d6a602.js" crossorigin="anonymous" integrity="sha384-nzU+tDcNprAeEK/LDlX24dk2U2e2Nptv8ZMNQUj07IMQV5dsGmaX2hp+lvz4IDzO"><link rel="preload" href="/ask_pete_frontend-5c98cad178d6a602_bg.wasm" crossorigin="anonymous" integrity="sha384-R7p/JNS+ee6eJxipQrdSHrAH3KT9JfAmILSoOIfUq36dR3nm+wBefymtgX5cngsN" as="fetch" type="application/wasm"></head>
+
+<body></body>
+
+</html>

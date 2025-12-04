@@ -1,0 +1,31 @@
+{
+  "id": "test_graph_weigh",
+  "title": "Weigh Station Test",
+  "nodes": [
+    {
+      "id": "node_heavy",
+      "title": "Heavy Node",
+      "content": "The concept of cognitive load theory suggests that the human brain has a limited capacity for processing information in working memory. When this capacity is exceeded, learning is hampered. Therefore, instructional design must manage intrinsic, extraneous, and germane load effectively.",
+      "x": 0.0,
+      "y": 0.0,
+      "passenger_count": 0,
+      "complexity_level": 1,
+      "learner_profiles": [],
+      "gardens_active": [],
+      "required_stats": {},
+      "logic": {
+        "condition": "None",
+        "effect": "None"
+      },
+      "style": {
+        "contrast": false,
+        "alignment": "",
+        "proximity": 0.0
+      },
+      "quest": null,
+      "mass": null,
+      "analysis_hash": null
+    }
+  ],
+  "connections": []
+}

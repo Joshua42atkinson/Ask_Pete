@@ -1,0 +1,56 @@
+{
+    "nodes": {
+        "1": {
+            "id": "1",
+            "speaker": "Pete",
+            "text": "Hello! I am Pete, your personal learning companion. Welcome to the Train Yard.",
+            "choices": [
+                {
+                    "text": "Hi Pete!",
+                    "next_node_id": "2",
+                    "conditions": []
+                },
+                {
+                    "text": "What is this place?",
+                    "next_node_id": "3",
+                    "conditions": []
+                }
+            ],
+            "events": [],
+            "position": {
+                "x": 100,
+                "y": 100
+            }
+        },
+        "2": {
+            "id": "2",
+            "speaker": "Pete",
+            "text": "It's great to meet you! We have a lot of work to do on your Locomotive.",
+            "choices": [],
+            "events": [],
+            "position": {
+                "x": 300,
+                "y": 100
+            }
+        },
+        "3": {
+            "id": "3",
+            "speaker": "Pete",
+            "text": "This is the Train Yard, where we build and maintain your cognitive engines.",
+            "choices": [
+                {
+                    "text": "Cool!",
+                    "next_node_id": "2",
+                    "conditions": []
+                }
+            ],
+            "events": [],
+            "position": {
+                "x": 300,
+                "y": 300
+            }
+        }
+    },
+    "start_node_id": "1",
+    "metadata": {}
+}
