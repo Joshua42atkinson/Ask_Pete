@@ -1,15 +1,12 @@
+use crate::services::weigh_station::{WeighStationService, WordPhysics};
+use crate::AppState;
 use axum::{
     extract::{Json, State},
     response::IntoResponse,
     routing::post,
     Router,
 };
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::Mutex;
-
-use crate::handlers::weigh_station::{WeighStation, WordPhysics};
-use crate::AppState;
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct WeighRequest {
@@ -31,9 +28,9 @@ async fn weigh_word(
     State(state): State<AppState>,
     Json(payload): Json<WeighRequest>,
 ) -> impl IntoResponse {
-    if let Some(station_mutex) = &state.weigh_station {
-        let mut station = station_mutex.lock().await;
-        match station.process_word(&payload.word).await {
+    if let Some(station) = &state.weigh_station {
+        // No lock needed for Arc<WeighStationService> as it uses internal mutability (PgPool) or immutable state
+        match station.weigh_word(&payload.word).await {
             Ok(physics) => Json::<WordPhysics>(physics).into_response(),
             Err(e) => {
                 (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
@@ -52,7 +49,7 @@ async fn analyze_text(
     State(_state): State<AppState>,
     Json(payload): Json<AnalyzeRequest>,
 ) -> impl IntoResponse {
-    // Static method, doesn't need state lock
-    let result = WeighStation::calculate_intrinsic_load(&payload.text);
+    // Static method
+    let result = WeighStationService::calculate_intrinsic_load(&payload.text);
     Json(result).into_response()
 }

@@ -24,10 +24,11 @@
 //! - Model Manager: Downloads and caches AI models from HuggingFace
 //! - Pete: AI teacher assistant using RAG (Retrieval-Augmented Generation)
 
+pub mod chat_queue;
 pub mod downloader;
 pub mod model_manager;
 pub mod model_registry; // [NEW]
 pub mod notebook_lm;
 pub mod pete; // [NEW]
 pub mod recharge_center;
-pub mod weigh_station;
+pub mod weigh_station; // [NEW]

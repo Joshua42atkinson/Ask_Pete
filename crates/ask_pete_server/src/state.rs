@@ -23,13 +23,14 @@ pub struct AppState {
     pub pete_command_inbox: PeteCommandInbox,
     pub pete_response_outbox: PeteResponseOutbox,
     pub shared_physics: SharedPhysicsResource,
-    pub weigh_station:
-        Option<Arc<tokio::sync::Mutex<crate::handlers::weigh_station::WeighStation>>>,
-    pub shared_campaign_state: SharedCampaignStateResource, // [NEW]
-    pub vote_inbox: VoteInbox,                              // [NEW]
-    pub shared_story_progress: Arc<RwLock<StoryProgress>>,  // [NEW]
-    pub quest_command_inbox: QuestCommandInbox,             // [NEW]
-                                                            // pub memory_store: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW] - Local Vector DB
+    pub weigh_station: Option<Arc<crate::services::weigh_station::WeighStationService>>,
+    pub chat_queue: crate::services::chat_queue::ChatQueueService, // [NEW] Job Queue
+    pub shared_campaign_state: SharedCampaignStateResource,        // [NEW]
+    pub vote_inbox: VoteInbox,                                     // [NEW]
+    pub shared_story_progress: Arc<RwLock<StoryProgress>>,         // [NEW]
+    pub quest_command_inbox: QuestCommandInbox,                    // [NEW]
+    pub quest_repo: Arc<dyn crate::repositories::quest_repo::QuestRepository>, // [NEW] Repository Pattern
+                                                                               // pub memory_store: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW] - Local Vector DB
 }
 
 impl axum::extract::FromRef<AppState> for PgPool {

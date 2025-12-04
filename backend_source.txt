@@ -1,0 +1,3217 @@
+﻿================================================================================
+FILE: \crates\ask_pete_server\src\check_quantized.rs
+================================================================================
+
+#[cfg(test)]
+mod tests {
+    use candle_transformers::models::quantized_llama::ModelWeights;
+
+    #[test]
+    fn test_import() {
+        // Just checking if it compiles
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\error.rs
+================================================================================
+
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
+use serde_json::json;
+use thiserror::Error;
+
+/// A unified error type for the entire Daydream Backend.
+/// This prevents "Stringly Typed" errors and ensures privacy.
+#[derive(Error, Debug)]
+pub enum AppError {
+    #[error("Authentication required")]
+    AuthError,
+
+    #[error("User not found")]
+    NotFound,
+
+    #[error("Database integrity violation")]
+    DatabaseError(#[from] sqlx::Error),
+
+    #[error("Invalid input data: {0}")]
+    ValidationError(&'static str),
+
+    #[error("Internal Server Error")]
+    InternalServerError,
+
+    #[error("Unexpected error: {0}")]
+    Anyhow(#[from] anyhow::Error),
+}
+
+/// A custom Result type for our application.
+pub type Result<T> = std::result::Result<T, AppError>;
+
+/// How to convert an AppError into an HTTP Response.
+/// Notice: Database errors are logged internally but appear as "500 Internal Error" to the user.
+/// This satisfies the "Privacy-First" Directive.
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        let (status, error_message) = match self {
+            AppError::AuthError => (StatusCode::UNAUTHORIZED, "Authentication required"),
+            AppError::NotFound => (StatusCode::NOT_FOUND, "Resource not found"),
+            AppError::ValidationError(msg) => (StatusCode::BAD_REQUEST, msg),
+
+            // SECURITY CRITICAL: Log the real error, send a generic one.
+            AppError::DatabaseError(e) => {
+                tracing::error!("Database Error: {:?}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error")
+            }
+            AppError::InternalServerError => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error")
+            }
+            AppError::Anyhow(e) => {
+                tracing::error!("Unexpected Error: {:?}", e);
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error")
+            }
+        };
+
+        let body = Json(json!({
+            "error": error_message,
+            "code": status.as_u16(),
+        }));
+
+        (status, body).into_response()
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\state.rs
+================================================================================
+
+use domain_physics::components::{
+    PeteCommandInbox, PeteResponseOutbox, QuestCommandInbox, ResearchLog,
+    SharedCampaignStateResource, SharedPhysicsResource, StoryProgress, VirtueTopology, VoteInbox,
+};
+use infra_ai::socratic_engine::SocraticEngine;
+use infra_db::ConversationMemory;
+use leptos::prelude::LeptosOptions;
+use leptos::prelude::*;
+use sqlx::PgPool;
+use std::sync::{Arc, RwLock};
+
+#[derive(Clone)]
+pub struct AppState {
+    pub leptos_options: LeptosOptions,
+    pub pool: Option<PgPool>,
+    pub shared_research_log: Arc<RwLock<ResearchLog>>,
+    pub shared_virtues: Arc<RwLock<VirtueTopology>>,
+    // pub gemma_server: Arc<crate::ai::llm::gemma_server::Gemma27BServer>,
+    pub conversation_memory: Arc<ConversationMemory>,
+    pub socratic_engine: Arc<tokio::sync::RwLock<SocraticEngine>>,
+    pub model_manager: Arc<tokio::sync::Mutex<crate::services::model_manager::ModelManager>>,
+    pub pete_assistant: Arc<crate::services::pete::PeteAssistant>,
+    pub pete_command_inbox: PeteCommandInbox,
+    pub pete_response_outbox: PeteResponseOutbox,
+    pub shared_physics: SharedPhysicsResource,
+    pub weigh_station:
+        Option<Arc<tokio::sync::Mutex<crate::handlers::weigh_station::WeighStation>>>,
+    pub shared_campaign_state: SharedCampaignStateResource, // [NEW]
+    pub vote_inbox: VoteInbox,                              // [NEW]
+    pub shared_story_progress: Arc<RwLock<StoryProgress>>,  // [NEW]
+    pub quest_command_inbox: QuestCommandInbox,             // [NEW]
+                                                            // pub memory_store: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW] - Local Vector DB
+}
+
+impl axum::extract::FromRef<AppState> for PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone().expect(
+            "Database pool not available. This handler should not be reachable in simulation mode.",
+        )
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\static_assets.rs
+================================================================================
+
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "static"]
+pub struct Assets;
+
+================================================================================
+FILE: \crates\ask_pete_server\src\antigravity\mod.rs
+================================================================================
+
+use pete_core::economy::Steam;
+
+#[derive(Clone, Debug)]
+pub struct AntigravityClient;
+
+impl AntigravityClient {
+    pub fn new() -> Self {
+        Self
+    }
+
+    pub async fn sync_steam(
+        &self,
+        _user_id: &str,
+        _amount: Steam,
+        _source: &str,
+    ) -> anyhow::Result<()> {
+        // Stub implementation
+        Ok(())
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\bin\seed_quests.rs
+================================================================================
+
+use anyhow::Result;
+use dotenv::dotenv;
+use sqlx::postgres::PgPoolOptions;
+use std::env;
+use std::fs;
+use std::path::PathBuf;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    dotenv().ok();
+    println!("ðŸŒ± Starting Quest Seeding...");
+
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let _pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await?;
+
+    // Load quests.json
+    let quests_path = PathBuf::from("../../libs/core/src/quests.json");
+    let quests_content = fs::read_to_string(&quests_path)?;
+    let quests: serde_json::Value = serde_json::from_str(&quests_content)?;
+
+    if let Some(quests_map) = quests.as_object() {
+        for (key, quest_data) in quests_map {
+            println!("Processing quest: {}", key);
+
+            let title = quest_data["title"].as_str().unwrap_or("Untitled Quest");
+
+            // Check if exists
+            /*
+            let exists = sqlx::query!("SELECT id FROM story_graphs WHERE title = $1", title)
+                .fetch_optional(&pool)
+                .await?;
+
+            if exists.is_some() {
+                println!("âš ï¸ Quest '{}' already exists. Skipping.", title);
+                continue;
+            }
+
+            // Insert
+            sqlx::query!(
+                r#"
+                INSERT INTO story_graphs (title, author_id, graph_data)
+                VALUES ($1, $2, $3)
+                "#,
+                title,
+                1 as i64, // Default author ID (system)
+                quest_data
+            )
+            .execute(&pool)
+            .await?;
+            */
+            println!("(Simulation) Would insert quest: {}", title);
+
+            println!("âœ… Inserted quest: {}", title);
+        }
+    }
+
+    println!("ðŸŽ‰ Seeding Complete!");
+    Ok(())
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\bin\test_env.rs
+================================================================================
+
+use std::env;
+
+fn main() {
+    dotenv::dotenv().ok();
+
+    println!("Environment Variable Test:");
+    println!("==========================");
+
+    match env::var("GEMINI_API_KEY") {
+        Ok(key) => {
+            let masked = if key.len() > 8 {
+                format!("{}...{}", &key[..4], &key[key.len() - 4..])
+            } else {
+                "****".to_string()
+            };
+            println!("âœ… GEMINI_API_KEY found: {}", masked);
+        }
+        Err(_) => {
+            println!("âŒ GEMINI_API_KEY not found");
+        }
+    }
+
+    match env::var("DATABASE_URL") {
+        Ok(url) => println!("âœ… DATABASE_URL found: {}", url),
+        Err(_) => println!("âŒ DATABASE_URL not found"),
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\bin\test_gemini.rs
+================================================================================
+
+use std::env;
+
+#[tokio::main]
+async fn main() {
+    dotenv::dotenv().ok();
+
+    println!("=== Direct Gemini API Test ===\n");
+
+    let api_key = env::var("GEMINI_API_KEY").expect("GEMINI_API_KEY not set");
+    println!(
+        "âœ… API Key loaded: {}...{}",
+        &api_key[..4],
+        &api_key[api_key.len() - 4..]
+    );
+
+    let model = "gemini-2.0-flash-exp";
+    let url = format!(
+        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+        model, api_key
+    );
+
+    println!("ðŸ“¡ Testing model: {}", model);
+    println!("ðŸ”— URL: {}\n", url.replace(&api_key, "***"));
+
+    let payload = serde_json::json!({
+        "contents": [{
+            "parts": [{
+                "text": "Say hello in exactly 5 words."
+            }]
+        }],
+        "generationConfig": {
+            "maxOutputTokens": 100,
+            "temperature": 0.7
+        }
+    });
+
+    println!("ðŸ“¤ Sending test request...");
+
+    let client = reqwest::Client::new();
+    let response = client
+        .post(&url)
+        .json(&payload)
+        .send()
+        .await
+        .expect("Failed to send request");
+
+    println!("ðŸ“¥ Status: {}\n", response.status());
+
+    let text = response.text().await.expect("Failed to read response");
+
+    if text.contains("\"error\"") {
+        println!("âŒ ERROR Response:\n{}\n", text);
+    } else {
+        println!("âœ… SUCCESS Response:\n{}\n", text);
+
+        // Try to parse and extract the actual text
+        let json: serde_json::Value = serde_json::from_str(&text).expect("Failed to parse JSON");
+        if let Some(candidates) = json.get("candidates") {
+            if let Some(first) = candidates.get(0) {
+                if let Some(content) = first.get("content") {
+                    if let Some(parts) = content.get("parts") {
+                        if let Some(part) = parts.get(0) {
+                            if let Some(text) = part.get("text") {
+                                println!("ðŸŽ¯ Generated Text: {}", text);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\bin\test_iron_split.rs
+================================================================================
+
+// File: crates/ask_pete_server/src/bin/test_iron_split.rs
+
+use infra_ai::iron_split::IronSplitSystem;
+
+fn main() -> anyhow::Result<()> {
+    println!("=== DAYDREAM ENGINE STARTUP ===");
+
+    // 1. Initialize the Iron Split System (Loads models into RAM)
+    // This may take 5-10 seconds on the Dell G5s.
+    let mut iron_system = IronSplitSystem::new()
+        .expect("CRITICAL FAILURE: Could not load Iron Split models. Check assets/models folder.");
+
+    // 2. Test The Navigator (Gemma 2B)
+    // Fast response for game loop
+    println!("\n--- TEST: NAVIGATOR (Gemma 2B) ---");
+    let nav_response =
+        iron_system.ask_navigator("Pete, systems are failing! Give me a triage report.")?;
+    println!("Pete: {}", nav_response);
+
+    // 3. Test The Architect (Mistral 7B)
+    // Slow, deep thought for blueprints
+    println!("\n--- TEST: ARCHITECT (Mistral 7B) ---");
+    let arch_response = iron_system.ask_architect(
+        "Explain the difference between Steam and Coal in the context of motivation mechanics.",
+    )?;
+    println!("Architect: {}", arch_response);
+
+    Ok(())
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\core\mod.rs
+================================================================================
+
+pub mod traits {
+    pub trait AssessmentPlugin {}
+    pub trait NarrativeFramework {}
+    pub trait NodeTypeExtension {}
+    pub trait ThemeProvider {}
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\data\mod.rs
+================================================================================
+
+pub mod seeds;
+
+================================================================================
+FILE: \crates\ask_pete_server\src\data\seeds.rs
+================================================================================
+
+use crate::domain::node_garden::NodeGarden;
+use crate::domain::vaam::VocabWord;
+
+pub fn get_node_gardens() -> Vec<NodeGarden> {
+    vec![NodeGarden::new(
+        "NG_BELL_TOWER".to_string(),
+        "The Bell Tower".to_string(),
+        40.4275,  // Purdue Bell Tower Lat
+        -86.9136, // Purdue Bell Tower Lon
+        50.0,     // 50 meter radius
+        "The Bell Tower".to_string(),
+    )]
+}
+
+pub fn get_vocab_words() -> Vec<VocabWord> {
+    vec![VocabWord {
+        id: 1,
+        word: "Campanile".to_string(),
+        definition: "A freestanding bell tower, especially of Italian design.".to_string(),
+        context_tag: Some("The Bell Tower".to_string()),
+        complexity_tier: Some(2),
+    }]
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\game\mod.rs
+================================================================================
+
+// Empty game module
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\architect.rs
+================================================================================
+
+use crate::error::Result;
+use crate::state::AppState;
+use axum::{extract::State, Json};
+use infra_ai::architect::{BlueprintRequest, BlueprintResponse, CurriculumArchitect};
+
+pub async fn generate_blueprint(
+    State(state): State<AppState>,
+    Json(payload): Json<BlueprintRequest>,
+) -> Result<Json<BlueprintResponse>> {
+    // Use the shared Socratic Engine (The AI Mirror)
+    let mut engine = state.socratic_engine.write().await;
+
+    // Generate blueprint using the engine's available model (Gemma or Gemini)
+    let response = engine.generate_blueprint(payload).await?;
+
+    Ok(Json(response))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\auth.rs
+================================================================================
+
+use axum::{
+    extract::{Query, State},
+    response::{IntoResponse, Redirect},
+    Json,
+};
+use oauth2::{
+    basic::BasicClient, reqwest::async_http_client, AuthUrl, AuthorizationCode, ClientId,
+    ClientSecret, CsrfToken, RedirectUrl, Scope, TokenResponse, TokenUrl,
+};
+use serde::{Deserialize, Serialize};
+use std::env;
+
+use crate::AppState;
+
+#[derive(Debug, Deserialize)]
+pub struct AuthRequest {
+    code: String,
+    state: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserInfo {
+    pub id: String,
+    pub email: String,
+    pub name: String,
+    pub picture: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AuthResponse {
+    pub token: String,
+    pub user: UserInfo,
+}
+
+pub async fn google_login_url() -> impl IntoResponse {
+    let client = get_oauth_client();
+    let (auth_url, _csrf_token) = client
+        .authorize_url(CsrfToken::new_random)
+        .add_scope(Scope::new("email".to_string()))
+        .add_scope(Scope::new("profile".to_string()))
+        .url();
+
+    // In a real app, store csrf_token in session/cookie to validate state
+    Redirect::to(auth_url.as_str())
+}
+
+pub async fn google_callback(
+    State(state): State<AppState>,
+    Query(query): Query<AuthRequest>,
+) -> impl IntoResponse {
+    let client = get_oauth_client();
+
+    // Exchange the code with a token.
+    let token_result = client
+        .exchange_code(AuthorizationCode::new(query.code))
+        .request_async(async_http_client)
+        .await;
+
+    match token_result {
+        Ok(token) => {
+            let access_token = token.access_token().secret();
+
+            // Get User Info from Google
+            let user_info = fetch_google_user_info(access_token).await.unwrap();
+
+            // Determine Role (Mock Logic for now)
+            // In production, check DB.
+            let role = if user_info.email.contains("student") {
+                pete_core::UserRole::Student
+            } else if user_info.email.contains("research") {
+                pete_core::UserRole::Researcher
+            } else {
+                pete_core::UserRole::Instructor // Default to Instructor for dev convenience? Or Student?
+                                                // Let's default to Student for safety, but for the "Trinity" demo, maybe Instructor is better?
+                                                // The user said "The app checks their role... and routes them".
+                                                // I'll default to Student.
+            };
+
+            // Generate JWT (Placeholder)
+            let jwt = format!("mock_jwt_token_for_{}", user_info.id);
+
+            // Redirect to the frontend with token and role
+            // The frontend will read these params and navigate.
+            let redirect_url = format!("/?token={}&role={:?}", jwt, role);
+            Redirect::to(&redirect_url).into_response()
+        }
+        Err(e) => Json(serde_json::json!({ "error": format!("Failed to exchange token: {}", e) }))
+            .into_response(),
+    }
+}
+
+fn get_oauth_client() -> BasicClient {
+    let client_id = env::var("GOOGLE_CLIENT_ID").expect("Missing GOOGLE_CLIENT_ID");
+    let client_secret = env::var("GOOGLE_CLIENT_SECRET").expect("Missing GOOGLE_CLIENT_SECRET");
+    let redirect_url = "http://localhost:3000/auth/callback"; // Frontend callback
+
+    let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
+        .expect("Invalid authorization endpoint URL");
+    let token_url = TokenUrl::new("https://oauth2.googleapis.com/token".to_string())
+        .expect("Invalid token endpoint URL");
+
+    BasicClient::new(
+        ClientId::new(client_id),
+        Some(ClientSecret::new(client_secret)),
+        auth_url,
+        Some(token_url),
+    )
+    .set_redirect_uri(RedirectUrl::new(redirect_url.to_string()).expect("Invalid redirect URL"))
+}
+
+async fn fetch_google_user_info(access_token: &str) -> Result<UserInfo, reqwest::Error> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get("https://www.googleapis.com/oauth2/v2/userinfo")
+        .bearer_auth(access_token)
+        .send()
+        .await?;
+
+    response.json::<UserInfo>().await
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\character.rs
+================================================================================
+
+use crate::state::AppState;
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize)]
+pub struct CreateCharacterRequest {
+    pub name: String,
+    pub role: String,
+    pub archetype: String,
+}
+
+pub async fn create_character(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateCharacterRequest>,
+) -> impl IntoResponse {
+    // TODO: Get user_id from auth context (mocking for now)
+    let user_id = 1;
+
+    let result = sqlx::query!(
+        r#"
+        INSERT INTO characters (user_id, name, role, archetype)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id
+        "#,
+        user_id,
+        payload.name,
+        payload.role,
+        payload.archetype
+    )
+    .fetch_one(state.pool.as_ref().unwrap())
+    .await;
+
+    match result {
+        Ok(record) => (StatusCode::CREATED, Json(record.id)).into_response(),
+        Err(e) => {
+            eprintln!("Failed to create character: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create character",
+            )
+                .into_response()
+        }
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\expert.rs
+================================================================================
+
+use crate::error::{AppError, Result};
+use crate::AppState;
+use axum::{extract::State, Json};
+use pete_core::expert::StoryGraph;
+use sqlx::Row;
+use std::fs;
+use std::path::Path;
+
+const DATA_FILE: &str = "data/story_graph.json";
+
+pub async fn get_graph(State(app_state): State<AppState>) -> Result<Json<StoryGraph>> {
+    let pool = match app_state.pool {
+        Some(pool) => pool,
+        None => {
+            // Try to load from file
+            if Path::new(DATA_FILE).exists() {
+                match fs::read_to_string(DATA_FILE) {
+                    Ok(content) => match serde_json::from_str::<StoryGraph>(&content) {
+                        Ok(graph) => return Ok(Json(graph)),
+                        Err(e) => tracing::error!("Failed to parse story graph file: {}", e),
+                    },
+                    Err(e) => tracing::error!("Failed to read story graph file: {}", e),
+                }
+            }
+
+            // Return a default graph if file doesn't exist or fails to load
+            let default_graph = StoryGraph {
+                id: "demo_graph".to_string(),
+                title: "New Story".to_string(),
+                nodes: vec![pete_core::expert::StoryNode {
+                    id: "start".to_string(),
+                    title: "The Beginning".to_string(),
+                    content: "Welcome! Click 'Blueprint' to start designing.".to_string(),
+                    x: 0.0,
+                    y: 0.0,
+                    passenger_count: 0,
+                    complexity_level: 1,
+                    learner_profiles: vec![],
+                    gardens_active: vec![],
+                    required_stats: std::collections::HashMap::new(),
+                    logic: Default::default(),
+                    style: Default::default(),
+                }],
+                connections: vec![],
+            };
+            return Ok(Json(default_graph));
+        }
+    };
+
+    // Fetch the graph (hardcoded ID for now, similar to mock)
+    let row = sqlx::query("SELECT nodes, connections, title FROM story_graphs WHERE id = $1")
+        .bind("demo_graph")
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error: {:?}", e);
+            AppError::InternalServerError
+        })?;
+
+    if let Some(row) = row {
+        let nodes: serde_json::Value = row.get("nodes");
+        let connections: serde_json::Value = row.get("connections");
+        let title: String = row.get("title");
+
+        let graph = StoryGraph {
+            id: "demo_graph".to_string(),
+            title,
+            nodes: serde_json::from_value(nodes).unwrap_or_default(),
+            connections: serde_json::from_value(connections).unwrap_or_default(),
+        };
+        Ok(Json(graph))
+    } else {
+        // Return a default empty graph if not found (auto-create logic could go here)
+        let default_graph = StoryGraph {
+            id: "demo_graph".to_string(),
+            title: "New Story".to_string(),
+            nodes: vec![],
+            connections: vec![],
+        };
+        Ok(Json(default_graph))
+    }
+}
+
+pub async fn save_graph(
+    State(app_state): State<AppState>,
+    Json(payload): Json<StoryGraph>,
+) -> Result<Json<StoryGraph>> {
+    let pool = match app_state.pool {
+        Some(pool) => pool,
+        None => {
+            // Save to file in simulation mode
+            // Ensure data directory exists
+            if let Some(parent) = Path::new(DATA_FILE).parent() {
+                let _ = fs::create_dir_all(parent);
+            }
+
+            match serde_json::to_string_pretty(&payload) {
+                Ok(json) => {
+                    if let Err(e) = fs::write(DATA_FILE, json) {
+                        tracing::error!("Failed to write story graph file: {}", e);
+                        return Err(AppError::InternalServerError);
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to serialize story graph: {}", e);
+                    return Err(AppError::InternalServerError);
+                }
+            }
+
+            return Ok(Json(payload));
+        }
+    };
+
+    let nodes_json = serde_json::to_value(&payload.nodes).unwrap();
+    let connections_json = serde_json::to_value(&payload.connections).unwrap();
+
+    sqlx::query(
+        r#"
+        INSERT INTO story_graphs (id, title, nodes, connections, updated_at)
+        VALUES ($1, $2, $3, $4, NOW())
+        ON CONFLICT (id) DO UPDATE
+        SET title = EXCLUDED.title,
+        nodes = EXCLUDED.nodes,
+        connections = EXCLUDED.connections,
+        updated_at = NOW()
+        "#,
+    )
+    .bind(&payload.id)
+    .bind(&payload.title)
+    .bind(nodes_json)
+    .bind(connections_json)
+    .execute(&pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Database error: {:?}", e);
+        AppError::InternalServerError
+    })?;
+
+    Ok(Json(payload))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\knowledge.rs
+================================================================================
+
+// Knowledge Base Management API
+// Handles document upload, chunking, and embedding for RAG with Gemma 27B
+
+use crate::error::AppError;
+use axum::{extract::State, Json};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+#[derive(Debug, Deserialize)]
+pub struct UploadKnowledgeRequest {
+    pub title: String,
+    pub content: String,
+    pub source_type: String, // "pdf", "txt", "md"
+}
+
+#[derive(Debug, Serialize)]
+pub struct UploadKnowledgeResponse {
+    pub source_id: Uuid,
+    pub chunks_created: usize,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SearchResult {
+    pub chunk_text: String,
+    pub similarity: f32,
+    pub source_title: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SearchRequest {
+    pub query: String,
+    pub limit: Option<usize>,
+}
+
+/// Upload a document and process it into searchable chunks
+pub async fn upload_knowledge(
+    Json(req): Json<UploadKnowledgeRequest>,
+) -> Result<Json<UploadKnowledgeResponse>, AppError> {
+    // TODO Phase 2: Implement document storage and chunking
+    // 1. Store document in knowledge_sources table
+    // 2. Chunk the content (500 tokens, 50 token overlap)
+    // 3. Generate embeddings using fastembed
+    // 4. Store vectors in knowledge_vectors table
+
+    let source_id = Uuid::new_v4();
+
+    Ok(Json(UploadKnowledgeResponse {
+        source_id,
+        chunks_created: 0,
+        message: "Knowledge upload endpoint ready (implementation pending database setup)"
+            .to_string(),
+    }))
+}
+
+/// Search for relevant knowledge chunks using vector similarity
+/// Uses Gemma 27B's synthesize_from_rag() for long-context orchestration
+pub async fn search_knowledge(
+    Json(req): Json<SearchRequest>,
+) -> Result<Json<Vec<SearchResult>>, AppError> {
+    // TODO Phase 2: Implement vector search with Gemma 27B synthesis
+    // 1. Generate embedding for query using FastEmbed
+    // 2. Perform cosine similarity search using pgvector
+    // 3. Use Gemma 27B's synthesize_from_rag() to create coherent answer (8K context!)
+    // 4. Return synthesized response with source attribution
+
+    log::info!(
+        "RAG search query: {} (limit: {})",
+        req.query,
+        req.limit.unwrap_or(5)
+    );
+
+    // Placeholder: In production, call:
+    // let sources = vector_search(&req.query, req.limit.unwrap_or(5)).await?;
+    // let synthesized = gemma_server.synthesize_from_rag(&req.query, &sources, 10)?;
+
+    Ok(Json(vec![]))
+}
+
+/// Utility: Chunk text using sliding window approach
+/// TODO: Upgrade to semantic chunking (sentence boundaries)
+pub fn chunk_text(text: &str, chunk_size: usize, overlap: usize) -> Vec<String> {
+    let words: Vec<&str> = text.split_whitespace().collect();
+    let mut chunks = Vec::new();
+
+    if words.is_empty() {
+        return chunks;
+    }
+
+    let mut i = 0;
+    while i < words.len() {
+        let end = (i + chunk_size).min(words.len());
+        let chunk = words[i..end].join(" ");
+        chunks.push(chunk);
+
+        // Move forward by (chunk_size - overlap) to create overlap
+        i += if chunk_size > overlap {
+            chunk_size - overlap
+        } else {
+            chunk_size
+        };
+    }
+
+    chunks
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_chunk_text() {
+        let text = "This is a test sentence with multiple words for chunking.";
+        let chunks = chunk_text(text, 3, 1);
+
+        assert!(!chunks.is_empty());
+        assert_eq!(chunks[0], "This is a");
+        assert_eq!(chunks[1], "a test sentence");
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\mod.rs
+================================================================================
+
+pub mod ai_mirror;
+pub mod architect;
+pub mod auth; // [NEW]
+pub mod campaign;
+pub mod expert;
+pub mod knowledge;
+pub mod persona;
+pub mod player;
+pub mod quest; // [NEW] Quest management (start/complete)
+pub mod recharge;
+pub mod research;
+pub mod simulation;
+pub mod telemetry;
+pub mod weigh_station;
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\persona.rs
+================================================================================
+
+use crate::AppState;
+use axum::{extract::State, http::StatusCode, Json};
+use pete_core::{Archetype, Dilemma, DilemmaChoice};
+use sqlx::Row;
+use std::collections::HashMap;
+
+pub async fn get_dilemmas(
+    State(app_state): State<AppState>,
+) -> Result<Json<Vec<Dilemma>>, (StatusCode, String)> {
+    let pool = match app_state.pool {
+        Some(ref p) => p,
+        None => return Ok(Json(Vec::new())),
+    };
+
+    let dilemma_rows = match sqlx::query("SELECT id, title, dilemma_text FROM dilemmas")
+        .fetch_all(pool)
+        .await
+    {
+        Ok(rows) => rows,
+        Err(e) => {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to fetch dilemmas: {}", e),
+            ));
+        }
+    };
+
+    let choice_rows = match sqlx::query("SELECT id, dilemma_id, choice_text FROM dilemma_choices")
+        .fetch_all(pool)
+        .await
+    {
+        Ok(rows) => rows,
+        Err(e) => {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to fetch dilemma choices: {}", e),
+            ));
+        }
+    };
+
+    let mut choices_map: HashMap<i32, Vec<DilemmaChoice>> = HashMap::new();
+    for row in choice_rows {
+        let choice = DilemmaChoice {
+            id: row.get("id"),
+            dilemma_id: row.get("dilemma_id"),
+            choice_text: row.get("choice_text"),
+        };
+        choices_map
+            .entry(choice.dilemma_id)
+            .or_default()
+            .push(choice);
+    }
+
+    let dilemmas = dilemma_rows
+        .into_iter()
+        .map(|row| {
+            let dilemma_id: i32 = row.get("id");
+            Dilemma {
+                id: dilemma_id,
+                title: row.get("title"),
+                dilemma_text: row.get("dilemma_text"),
+                choices: choices_map.remove(&dilemma_id).unwrap_or_default(),
+            }
+        })
+        .collect();
+
+    Ok(Json(dilemmas))
+}
+
+pub async fn get_archetypes(
+    State(app_state): State<AppState>,
+) -> Result<Json<Vec<Archetype>>, (StatusCode, String)> {
+    let pool = match app_state.pool {
+        Some(ref p) => p,
+        None => return Ok(Json(Vec::new())),
+    };
+
+    let rows = match sqlx::query("SELECT id, name, description, locomotive_type, fuel_efficiency, cargo_capacity, durability FROM archetypes")
+        .fetch_all(pool)
+        .await
+    {
+        Ok(rows) => rows,
+        Err(e) => {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to fetch archetypes: {}", e),
+            ));
+        }
+    };
+
+    let archetypes = rows
+        .into_iter()
+        .map(|row| Archetype {
+            id: row.get("id"),
+            name: row.get("name"),
+            description: row.get("description"),
+            locomotive_type: row.get("locomotive_type"),
+            fuel_efficiency: row.get("fuel_efficiency"),
+            cargo_capacity: row.get("cargo_capacity"),
+            durability: row.get("durability"),
+        })
+        .collect();
+
+    Ok(Json(archetypes))
+}
+
+use crate::domain::player::get_simulated_character;
+use pete_core::{PlayerCharacter, QuizSubmission};
+
+pub async fn submit_quiz(
+    State(_app_state): State<AppState>,
+    Json(_submission): Json<QuizSubmission>,
+) -> Result<Json<PlayerCharacter>, (StatusCode, String)> {
+    // Mock implementation while AsyncWorld/tx is disabled
+    Ok(Json(get_simulated_character()))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\persona_test_final.rs
+================================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::state::AppState;
+    use axum::extract::State;
+    use sqlx::postgres::PgPoolOptions;
+    use std::env;
+    use std::sync::{Arc, RwLock};
+
+    #[tokio::test]
+    async fn test_get_archetypes_returns_locomotive_stats() {
+        // 1. Setup DB Connection
+        dotenvy::dotenv().ok();
+        let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+        let pool = PgPoolOptions::new()
+            .connect(&database_url)
+            .await
+            .expect("Failed to connect to DB");
+
+        // 2. Mock AppState (Minimal)
+        let leptos_options = leptos::config::LeptosOptions::builder()
+            .output_name("app")
+            .site_root("target/site")
+            .build();
+
+        let app_state = AppState {
+            pool: Some(pool),
+            leptos_options,
+            shared_research_log: Arc::new(RwLock::new(Default::default())),
+            shared_virtues: Arc::new(RwLock::new(Default::default())),
+            conversation_memory: Arc::new(
+                crate::ai::conversation_memory::ConversationMemory::new_in_memory(10),
+            ),
+            socratic_engine: Arc::new(tokio::sync::RwLock::new(
+                crate::ai::socratic_engine::SocraticEngine::new(Arc::new(
+                    crate::ai::conversation_memory::ConversationMemory::new_in_memory(10),
+                )),
+            )),
+            model_manager: Arc::new(tokio::sync::Mutex::new(
+                crate::services::model_manager::ModelManager::new().unwrap(),
+            )),
+            pete_assistant: Arc::new(crate::services::pete::PeteAssistant::new().unwrap()),
+            pete_command_inbox: crate::game::components::PeteCommandInbox(Arc::new(RwLock::new(
+                Vec::new(),
+            ))),
+            pete_response_outbox: crate::game::components::PeteResponseOutbox(Arc::new(
+                RwLock::new(Vec::new()),
+            )),
+            shared_physics: crate::game::components::SharedPhysicsResource(Arc::new(RwLock::new(
+                Default::default(),
+            ))),
+            weigh_station: None,
+            shared_campaign_state: crate::game::components::SharedCampaignStateResource(Arc::new(
+                RwLock::new(Default::default()),
+            )),
+            vote_inbox: crate::game::components::VoteInbox(Arc::new(RwLock::new(Vec::new()))),
+            memory_store: None,
+        };
+
+        // 3. Call Handler
+        let result = get_archetypes(State(app_state)).await;
+
+        // 4. Assertions
+        let Json(archetypes) = result.expect("Failed to get archetypes");
+        assert!(!archetypes.is_empty());
+
+        // Check for "The Innocent" and its stats
+        let innocent = archetypes
+            .iter()
+            .find(|a| a.name == "The Innocent")
+            .expect("The Innocent not found");
+        assert_eq!(innocent.locomotive_type, "Light Commuter Rail");
+        assert_eq!(innocent.fuel_efficiency, 1.5);
+        assert_eq!(innocent.cargo_capacity, 5.0);
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\player.rs
+================================================================================
+
+use crate::domain::player::get_simulated_character;
+use crate::error::Result;
+use crate::state::AppState;
+use axum::{extract::State, Json};
+use pete_core::{
+    CharacterSummary, GameTurn, JournalData, PlayerCharacter, PlayerCommand, PlayerProfile,
+    ProfileData, VocabEntry, CHARACTER_TEMPLATES,
+};
+use std::collections::HashMap;
+
+pub async fn handle_submit_command(
+    State(_app_state): State<AppState>,
+    Json(payload): Json<PlayerCommand>,
+) -> Result<Json<GameTurn>> {
+    // Mock implementation while AsyncWorld is disabled
+    let updated_character = get_simulated_character();
+
+    let game_turn = GameTurn {
+        player_command: payload.command_text,
+        ai_narrative: "Simulation mode: AsyncWorld disabled.".to_string(),
+        system_message: None,
+        updated_character,
+    };
+
+    Ok(Json(game_turn))
+}
+
+pub async fn get_player_character(
+    State(app_state): State<AppState>,
+) -> Result<Json<PlayerCharacter>> {
+    let mut character = get_simulated_character();
+
+    // [NEW] Sync with ECS State
+    if let Ok(progress) = app_state.shared_story_progress.read() {
+        character.current_quest_id = progress.current_quest_id.clone();
+        character.current_step_id = progress.current_step_id.clone();
+        character.current_step_description = progress.current_step_description.clone();
+        character.inventory = progress.inventory.clone();
+        character.quest_flags = progress.quest_flags.clone();
+        character.learned_vocab = progress.learned_vocab.clone();
+    }
+
+    Ok(Json(character))
+}
+
+pub async fn get_journal_data(State(_app_state): State<AppState>) -> Result<Json<JournalData>> {
+    let character = get_simulated_character();
+    let mut awl_words = Vec::new();
+    awl_words.push(VocabEntry {
+        word: "analyse".to_string(),
+        definition: "To examine something methodically...".to_string(),
+    });
+    awl_words.push(VocabEntry {
+        word: "approach".to_string(),
+        definition: "A way of dealing with something...".to_string(),
+    });
+
+    let mut ai_lists = HashMap::new();
+    ai_lists.insert(
+        "'Chaos' Context".to_string(),
+        vec![VocabEntry {
+            word: "entropy".to_string(),
+            definition: "Lack of order or predictability...".to_string(),
+        }],
+    );
+
+    let data = JournalData {
+        awl_words: awl_words,
+        ai_word_lists: ai_lists,
+        report_summaries: character.report_summaries,
+    };
+    Ok(Json(data))
+}
+
+pub async fn get_profile_data(State(_app_state): State<AppState>) -> Result<Json<ProfileData>> {
+    let characters = vec![
+        CharacterSummary {
+            id: "char_sim_totem_001".to_string(),
+            name: "Totem".to_string(),
+            race: "Sasquatch".to_string(),
+            class_name: "Soldier".to_string(),
+        },
+        CharacterSummary {
+            id: "char_sim_bolt_002".to_string(),
+            name: "Bolt".to_string(),
+            race: "Android".to_string(),
+            class_name: "Inventor".to_string(),
+        },
+    ];
+
+    let data = ProfileData {
+        email: "player@daydream.com".to_string(),
+        has_premium: true,
+        characters: characters,
+        premade_characters: CHARACTER_TEMPLATES.to_vec(),
+    };
+    Ok(Json(data))
+}
+
+pub async fn get_player_profile(State(_app_state): State<AppState>) -> Result<Json<PlayerProfile>> {
+    // let player = sqlx::query_as!(PlayerProfile, "SELECT * FROM players WHERE id = $1", 1)
+    //     .fetch_optional(&app_state.pool)
+    //     .await?
+    //     .ok_or(AppError::NotFound)?;
+
+    Ok(Json(PlayerProfile {
+        id: 1,
+        username: "Daydreamer".to_string(),
+        archetype: "The Sage".to_string(),
+    }))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\quest.rs
+================================================================================
+
+use crate::error::{AppError, Result};
+use crate::state::AppState;
+use axum::{
+    extract::{Path, State},
+    Json,
+};
+use pete_core::expert::StoryGraph;
+use serde::{Deserialize, Serialize};
+use sqlx::Row;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StartQuestResponse {
+    pub success: bool,
+    pub message: String,
+}
+
+pub async fn start_quest(
+    State(state): State<AppState>,
+    Path(quest_id): Path<i32>,
+) -> Result<Json<StartQuestResponse>> {
+    // 1. Load StoryGraph from DB
+    let pool = state.pool.as_ref().ok_or(AppError::InternalServerError)?;
+
+    let row = sqlx::query("SELECT graph_data FROM story_graphs WHERE id = $1")
+        .bind(quest_id)
+        .fetch_optional(pool)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    let graph_data: serde_json::Value = row
+        .try_get("graph_data")
+        .map_err(|e| anyhow::anyhow!("Failed to get graph_data: {}", e))?;
+
+    let graph: StoryGraph = serde_json::from_value(graph_data)
+        .map_err(|e| anyhow::anyhow!("Failed to deserialize graph: {}", e))?;
+
+    // 2. Calculate Initial Load via WeighStation (Cognitive Logistics)
+    let intrinsic_load = {
+        let engine = state.socratic_engine.read();
+        // Use a read lock to access the engine
+        match engine.await.analyze_load(&graph.title).await {
+            Ok(profile) => {
+                log::info!(
+                    "Cognitive Load Analysis for '{}': {:?}",
+                    graph.title,
+                    profile
+                );
+                profile.intrinsic
+            }
+            Err(e) => {
+                log::warn!(
+                    "Failed to analyze load for '{}': {}. Using default.",
+                    graph.title,
+                    e
+                );
+                5.0 // Default safe load
+            }
+        }
+    };
+
+    // 3. Update ECS State via Inbox
+    if let Ok(mut inbox) = state.quest_command_inbox.0.write() {
+        inbox.push(domain_physics::components::StartQuestEvent {
+            quest_id: quest_id.to_string(),
+        });
+    }
+
+    // Also update SharedStoryProgress immediately for UI responsiveness (optional but good for UX)
+    if let Ok(mut progress) = state.shared_story_progress.write() {
+        progress.current_quest_id = Some(quest_id.to_string());
+        if let Some(start_node) = graph.nodes.first() {
+            progress.current_step_id = Some(start_node.id.clone());
+            progress.current_step_description = start_node.content.clone();
+        }
+        progress.history.clear();
+        progress.inventory.clear();
+    }
+
+    Ok(Json(StartQuestResponse {
+        success: true,
+        message: format!("Started quest: {}", graph.title),
+    }))
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CompleteQuestResponse {
+    pub success: bool,
+    pub steam_earned: f64,
+    pub new_balance: f64,
+}
+
+pub async fn complete_quest(
+    State(state): State<AppState>,
+    Path(quest_id): Path<i32>,
+    // In a real app, we'd extract UserId from the token. For MVP, we'll use a hardcoded ID or header.
+    // headers: HeaderMap,
+) -> Result<Json<CompleteQuestResponse>> {
+    let user_id = 1; // Hardcoded for MVP (The "Student" user)
+
+    // 1. Calculate Steam Earned (from Physics State)
+    // TODO: PhysicsState needs a steam field added - using velocity * miles as proxy for now
+    let steam_earned = {
+        let physics = state
+            .shared_physics
+            .0
+            .read()
+            .map_err(|_| AppError::InternalServerError)?;
+        // Temporary calculation: Steam = velocity * miles traveled * 0.1
+        (physics.velocity * physics.miles * 0.1) as f64
+    };
+
+    // 2. Update Database
+    let pool = state.pool.as_ref().ok_or(AppError::InternalServerError)?;
+
+    let mut tx = pool.begin().await?;
+
+    // Update User Balance
+    let row = sqlx::query(
+        "UPDATE users SET steam_balance = steam_balance + $1 WHERE id = $2 RETURNING steam_balance",
+    )
+    .bind(steam_earned)
+    .bind(user_id)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    let new_balance: f64 = row.try_get("steam_balance")?;
+
+    // Log Completion
+    sqlx::query(
+        "INSERT INTO quest_completions (user_id, quest_id, steam_earned) VALUES ($1, $2, $3)",
+    )
+    .bind(user_id)
+    .bind(quest_id)
+    .bind(steam_earned)
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+
+    // 3. Reset Physics State (Optional, or let it persist until next quest)
+    // For now, we leave it as "history" of the run.
+
+    Ok(Json(CompleteQuestResponse {
+        success: true,
+        steam_earned,
+        new_balance,
+    }))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\recharge.rs
+================================================================================
+
+use crate::AppState;
+use axum::{
+    extract::{Json, State},
+    response::IntoResponse,
+};
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize)]
+pub struct ReportMilesRequest {
+    pub student_id: uuid::Uuid,
+    pub amount: f64,
+    pub reason: String,
+}
+
+pub async fn report_miles(
+    State(state): State<AppState>,
+    Json(payload): Json<ReportMilesRequest>,
+) -> impl IntoResponse {
+    // In simulation mode (no DB), just log it
+    if state.pool.is_none() {
+        println!(
+            "SIMULATION: Reporting {} miles for student {} because: {}",
+            payload.amount, payload.student_id, payload.reason
+        );
+        return Json(serde_json::json!({ "status": "success", "message": "Simulated report" }));
+    }
+
+    let pool = state.pool.as_ref().unwrap();
+
+    // TODO: Implement actual SQL transaction
+    // For now, just placeholder
+    Json(serde_json::json!({ "status": "success", "message": "Miles reported (DB placeholder)" }))
+}
+
+pub async fn get_department_report(State(_state): State<AppState>) -> impl IntoResponse {
+    // Placeholder report
+    let report = serde_json::json!({
+        "department": "Engineering",
+        "total_miles_earned": 1000.0,
+        "total_miles_spent": 250.0,
+        "balance": 750.0
+    });
+    Json(report)
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\research.rs
+================================================================================
+
+use crate::error::Result;
+use crate::AppState;
+use axum::{extract::State, Json};
+use domain_physics::components::{ResearchLog, VirtueTopology};
+
+pub async fn get_research_log(State(state): State<AppState>) -> Result<Json<ResearchLog>> {
+    let log = state.shared_research_log.read().unwrap().clone();
+    Ok(Json(log))
+}
+
+pub async fn get_virtue_topology(State(state): State<AppState>) -> Result<Json<VirtueTopology>> {
+    let virtues = state.shared_virtues.read().unwrap().clone();
+    Ok(Json(virtues))
+}
+
+pub async fn log_research_event(
+    State(state): State<AppState>,
+    Json(payload): Json<serde_json::Value>,
+) -> Result<Json<String>> {
+    // For now, just log to console or append to shared log
+    let mut log = state.shared_research_log.write().unwrap();
+
+    let event = domain_physics::components::ResearchEvent {
+        timestamp: 0.0, // TODO: Get actual time or simulation time
+        event_type: "LOG".to_string(),
+        data: payload.to_string(),
+    };
+
+    log.events.push(event);
+    Ok(Json("Logged".to_string()))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\simulation.rs
+================================================================================
+
+use crate::state::AppState;
+use axum::{extract::State, Json};
+use domain_physics::components::PhysicsState;
+
+pub async fn get_simulation_state(State(state): State<AppState>) -> Json<PhysicsState> {
+    let physics = state.shared_physics.0.read().unwrap();
+    Json(physics.clone())
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\story.rs
+================================================================================
+
+use crate::error::Result;
+use crate::state::AppState;
+use axum::{extract::State, Json};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize)]
+pub struct GenerateStoryRequest {
+    pub vaam_words: Vec<String>,
+    pub theme: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GenerateStoryResponse {
+    pub story: String,
+}
+
+/// Generate a short story incorporating the provided VaaM words
+pub async fn generate_story(
+    State(state): State<AppState>,
+    Json(payload): Json<GenerateStoryRequest>,
+) -> Result<Json<GenerateStoryResponse>> {
+    println!(
+        "Story Handler: Generating story for theme: '{}' with words: {:?}",
+        payload.theme, payload.vaam_words
+    );
+
+    let words_list = payload.vaam_words.join(", ");
+    let prompt = format!(
+        r#"You are a Storyteller for the Iron Network.
+
+THEME: "{}"
+VOCABULARY WORDS: {}
+
+Write a short, engaging story (approx. 200-300 words) that naturally incorporates ALL of the provided vocabulary words.
+The story should be fun, slightly gamified (referencing "Operators", "Trains", or "The Static" if appropriate for the theme, otherwise stick to the requested theme), and educational.
+
+Highlight the vocabulary words in the story by wrapping them in **bold**.
+
+Generate the story now:"#,
+        payload.theme, words_list
+    );
+
+    // Use Socratic Engine's LLM client
+    let engine = state.socratic_engine.read().await;
+
+    // Generate using LLM
+    let response_text = match engine.llm_client() {
+        Some(client) => client
+            .generate_text(&prompt)
+            .await
+            .map_err(|e| anyhow::anyhow!("LLM generation failed: {}", e))?,
+        None => {
+            return Err(anyhow::anyhow!("LLM client not available").into());
+        }
+    };
+
+    println!(
+        "Story Handler: Generated story of length {}",
+        response_text.len()
+    );
+
+    Ok(Json(GenerateStoryResponse {
+        story: response_text,
+    }))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\telemetry.rs
+================================================================================
+
+use crate::error::{AppError, Result};
+use crate::state::AppState;
+use axum::{extract::State, Json};
+use pete_core::db::TelemetryLog;
+use sqlx::PgPool;
+
+pub async fn log_telemetry(
+    State(app_state): State<AppState>,
+    Json(payload): Json<TelemetryLog>,
+) -> Result<Json<String>> {
+    let pool = match app_state.pool {
+        Some(pool) => pool,
+        None => return Ok(Json("Simulation Mode: Logged".to_string())),
+    };
+
+    sqlx::query(
+        r#"
+        INSERT INTO telemetry_logs (user_id, timestamp, event_type, value, context)
+        VALUES ($1, $2, $3, $4, $5)
+        "#,
+    )
+    .bind(&payload.user_id)
+    .bind(payload.timestamp)
+    .bind(&payload.event_type)
+    .bind(payload.value)
+    .bind(&payload.context)
+    .execute(&pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Database error: {:?}", e);
+        AppError::InternalServerError
+    })?;
+
+    Ok(Json("Logged".to_string()))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\vaam.rs
+================================================================================
+
+use axum::{
+    extract::{Path, State},
+    Json,
+};
+use crate::{
+    domain::vaam::{VaamService, VocabWord, WordUsageRequest},
+    Result, AppState,
+};
+
+/// GET /api/vaam/context/:tag
+/// Returns the "Lexical Inventory" for a specific scene.
+pub async fn get_context_inventory(
+    State(app_state): State<AppState>,
+    Path(tag): Path<String>,
+) -> Result<Json<Vec<VocabWord>>> {
+    if let Some(pool) = app_state.pool {
+        let words = VaamService::get_words_for_context(&pool, &tag).await?;
+        Ok(Json(words))
+    } else {
+        Ok(Json(Vec::new()))
+    }
+}
+
+/// POST /api/vaam/log
+/// The game client calls this when a player chooses a dialogue option.
+/// Returns: true if the player just achieved mastery, false otherwise.
+pub async fn log_word_usage(
+    State(app_state): State<AppState>,
+    Json(payload): Json<WordUsageRequest>,
+) -> Result<Json<bool>> {
+    if let Some(pool) = app_state.pool {
+        let mastered_just_now = VaamService::log_usage(&pool, payload).await?;
+        Ok(Json(mastered_just_now))
+    } else {
+        Ok(Json(false))
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\weigh_station.rs
+================================================================================
+
+use anyhow::{Context, Result};
+use infra_ai::local_inference::GenerationConfig;
+use infra_ai::LocalModel;
+use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
+
+/// The "Ticket" Pete gives back after weighing a word
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WordPhysics {
+    pub word: String,
+    pub definition: String,
+    pub grade_level: i32,
+    pub tier: i32,
+    pub weight: i32, // 1-100
+    pub tags: Vec<String>,
+}
+
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+// use crate::ai::memory::{Document, VectorStore}; // [NEW]
+
+pub struct WeighStation {
+    db: PgPool,
+    llm: LocalModel,
+    // memory: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW]
+}
+
+impl WeighStation {
+    pub fn new(
+        db: PgPool,
+        llm: infra_ai::LocalModel,
+        // memory: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW]
+    ) -> Self {
+        Self { db, llm } //, memory }
+    }
+
+    /// The core loop: Takes a raw word, weighs it, stores it.
+    pub async fn process_word(&mut self, raw_word: &str) -> Result<WordPhysics> {
+        println!("âš–ï¸  Weighing: '{}'...", raw_word);
+
+        // 1. Construct the Prompt (The "Scale")
+        let prompt = format!(
+            r#"You are an Expert Instructional Designer and Linguist. 
+            Analyze the English word: "{}" for a K-12 Curriculum.
+            
+            Return ONLY a JSON object with this exact structure:
+            {{
+                "word": "{}",
+                "definition": "A simple, clear definition for a student.",
+                "grade_level": <integer 0-12>,
+                "tier": <integer 1, 2, or 3>,
+                "weight": <integer 1-100 representing cognitive load difficulty>,
+                "tags": ["<tag1>", "<tag2>"]
+            }}
+            
+            RUBRIC:
+            - Tier 1: Basic conversation (Weight 1-10)
+            - Tier 2: Academic cross-curriculum (Weight 11-50)
+            - Tier 3: Domain specific/Technical (Weight 51-100)
+            "#,
+            raw_word, raw_word
+        );
+
+        // 2. Ask Pete (The Inference)
+        let config = GenerationConfig {
+            max_tokens: 300,
+            temperature: 0.2, // Low temp for precision/consistency
+            ..Default::default()
+        };
+
+        let json_response = self.llm.generate(prompt, config).await?;
+
+        // 3. Parse the Physics
+        // Use robust shared utility to handle potential markdown or extra text
+        let clean_json = infra_ai::json_utils::extract_json_from_text(&json_response)
+            .unwrap_or_else(|| json_response.to_string());
+
+        let physics: WordPhysics =
+            serde_json::from_str(&clean_json).context("Failed to parse Pete's weighing ticket")?;
+
+        // 4. Store in the Depot
+        self.store_in_depot(&physics).await?;
+
+        println!("âœ… Stored: {} (Weight: {})", physics.word, physics.weight);
+        Ok(physics)
+    }
+
+    async fn store_in_depot(&self, p: &WordPhysics) -> Result<()> {
+        sqlx::query(
+            r#"
+            INSERT INTO vocabulary_words 
+            (word, definition, grade_level, tier, weight, tags)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (word) DO UPDATE 
+            SET weight = $5, -- Update weight if it changed
+                definition = $2,
+                grade_level = $3,
+                tier = $4,
+                tags = $6
+            "#,
+        )
+        .bind(&p.word)
+        .bind(&p.definition)
+        .bind(p.grade_level)
+        .bind(p.tier)
+        .bind(p.weight)
+        .bind(&p.tags)
+        .execute(&self.db)
+        .await?;
+
+        Ok(())
+    }
+
+    /// Calculates the "Intrinsic Load" (Cognitive Weight) of a text.
+    pub fn calculate_intrinsic_load(text: &str) -> TextAnalysisResult {
+        let words: Vec<&str> = text.split_whitespace().collect();
+        let word_count = words.len();
+
+        // Simple sentence splitting by punctuation
+        let sentence_count = text
+            .split(|c| c == '.' || c == '!' || c == '?')
+            .filter(|s| !s.trim().is_empty())
+            .count();
+
+        // Avoid division by zero
+        let safe_word_count = word_count.max(1);
+        let safe_sentence_count = sentence_count.max(1);
+
+        // Calculate Lexical Density (Simplified: assume words > 6 chars are "content" words for now)
+        // In a real implementation, we'd use a POS tagger to find Nouns/Verbs vs Prepositions.
+        let complex_words = words.iter().filter(|w| w.len() > 6).count();
+        let lexical_density = (complex_words as f32 / safe_word_count as f32) * 100.0;
+
+        // Calculate Average Sentence Length
+        let avg_sentence_length = safe_word_count as f32 / safe_sentence_count as f32;
+
+        // Formula for Intrinsic Load (Heuristic)
+        // Load = (Density * 0.1) + (AvgSentenceLength * 0.2)
+        let raw_load = (lexical_density * 0.1) + (avg_sentence_length * 0.2);
+
+        // Normalize to 0-10 scale (approximate)
+        let intrinsic_load = raw_load.clamp(0.0, 10.0);
+
+        TextAnalysisResult {
+            word_count,
+            sentence_count,
+            lexical_density,
+            intrinsic_load,
+            is_overloaded: intrinsic_load > 7.0, // Threshold for "Red Zone"
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TextAnalysisResult {
+    pub word_count: usize,
+    pub sentence_count: usize,
+    pub lexical_density: f32,
+    pub intrinsic_load: f32, // 0.0 to 10.0
+    pub is_overloaded: bool,
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\handlers\persona.rs
+================================================================================
+
+use axum::{extract::State, Json};
+use pete_core::{Dilemma, Archetype, DilemmaChoice};
+use std::collections::HashMap;
+use crate::{AppState, Result};
+
+pub async fn get_dilemmas(
+    State(app_state): State<AppState>,
+) -> Result<Json<Vec<Dilemma>>> {
+    let dilemma_rows = sqlx::query("SELECT id, title, dilemma_text FROM dilemmas")
+        .fetch_all(&app_state.pool)
+        .await?;
+
+    let choice_rows = sqlx::query("SELECT id, dilemma_id, choice_text FROM dilemma_choices")
+        .fetch_all(&app_state.pool)
+        .await?;
+
+    let mut choices_map: HashMap<i32, Vec<DilemmaChoice>> = HashMap::new();
+    for row in choice_rows {
+        let choice = DilemmaChoice {
+            id: row.get("id"),
+            dilemma_id: row.get("dilemma_id"),
+            choice_text: row.get("choice_text"),
+        };
+        choices_map.entry(choice.dilemma_id).or_default().push(choice);
+    }
+
+    let dilemmas = dilemma_rows.into_iter().map(|row| {
+        let dilemma_id: i32 = row.get("id");
+        Dilemma {
+            id: dilemma_id,
+            title: row.get("title"),
+            dilemma_text: row.get("dilemma_text"),
+            choices: choices_map.remove(&dilemma_id).unwrap_or_default(),
+        }
+    }).collect();
+
+    Ok(Json(dilemmas))
+}
+
+pub async fn get_archetypes(
+    State(app_state): State<AppState>,
+) -> Result<Json<Vec<Archetype>>> {
+    let rows = sqlx::query("SELECT id, name, description FROM archetypes")
+        .fetch_all(&app_state.pool)
+        .await?;
+
+    let archetypes = rows.into_iter().map(|row| {
+        Archetype {
+            id: row.get("id"),
+            name: row.get("name"),
+            description: row.get("description"),
+        }
+    }).collect();
+
+    Ok(Json(archetypes))
+}
+
+use pete_core::{QuizSubmission, PlayerCharacter};
+use crate::domain::persona_logic::calculate_archetype;
+use tokio::sync::oneshot;
+use crate::AppError;
+use sqlx::Row;
+
+pub async fn submit_quiz(
+    State(app_state): State<AppState>,
+    Json(submission): Json<QuizSubmission>,
+) -> Result<Json<PlayerCharacter>> {
+    let result = calculate_archetype(&app_state.pool, &submission).await?;
+
+    let (one_tx, one_rx) = oneshot::channel();
+    let command = format!("set_archetype {} {}", result.primary_archetype.id, serde_json::to_string(&result.stats).unwrap());
+    app_state.tx.send((command, one_tx)).await.map_err(|_| AppError::InternalServerError)?;
+
+    let updated_player = one_rx.await.map_err(|_| AppError::InternalServerError)?;
+
+    Ok(Json(updated_player))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\handlers\handlers\vaam.rs
+================================================================================
+
+use axum::{
+    extract::{Path, State},
+    Json,
+};
+use crate::{
+    domain::vaam::{VaamService, VocabWord, WordUsageRequest},
+    Result, AppState,
+};
+
+/// GET /api/vaam/context/:tag
+/// Returns the "Lexical Inventory" for a specific scene.
+pub async fn get_context_inventory(
+    State(app_state): State<AppState>,
+    Path(tag): Path<String>,
+) -> Result<Json<Vec<VocabWord>>> {
+    let words = VaamService::get_words_for_context(&app_state.pool, &tag).await?;
+    Ok(Json(words))
+}
+
+/// POST /api/vaam/log
+/// The game client calls this when a player chooses a dialogue option.
+/// Returns: true if the player just achieved mastery, false otherwise.
+pub async fn log_word_usage(
+    State(app_state): State<AppState>,
+    Json(payload): Json<WordUsageRequest>,
+) -> Result<Json<bool>> {
+    let mastered_just_now = VaamService::log_usage(&app_state.pool, payload).await?;
+    Ok(Json(mastered_just_now))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\middleware\auth.rs
+================================================================================
+
+use axum::{
+    extract::Request,
+    http::{header, StatusCode},
+    middleware::Next,
+    response::Response,
+};
+
+pub async fn auth_middleware(req: Request, next: Next) -> Result<Response, StatusCode> {
+    // 1. Check for Authorization header
+    let auth_header = req
+        .headers()
+        .get(header::AUTHORIZATION)
+        .and_then(|header| header.to_str().ok());
+
+    match auth_header {
+        Some(auth_header) if auth_header.starts_with("Bearer ") => {
+            // let token = auth_header.trim_start_matches("Bearer ");
+            // TODO: Verify JWT token here using jsonwebtoken crate
+            // For now, we accept any token for the "Technical Spike"
+            Ok(next.run(req).await)
+        }
+        _ => {
+            // For dev/testing, if no header, we might want to allow it or fail
+            // Err(StatusCode::UNAUTHORIZED)
+
+            // [DEV MODE] Allow requests without token for now to avoid breaking existing flows
+            Ok(next.run(req).await)
+        }
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\middleware\mod.rs
+================================================================================
+
+pub mod auth;
+
+================================================================================
+FILE: \crates\ask_pete_server\src\plugins\mod.rs
+================================================================================
+
+pub mod registry;
+
+================================================================================
+FILE: \crates\ask_pete_server\src\plugins\registry.rs
+================================================================================
+
+use crate::core::traits::{AssessmentPlugin, NarrativeFramework, NodeTypeExtension, ThemeProvider};
+use std::collections::HashMap;
+use std::sync::Arc;
+
+/// Central registry for all plugins in the Daydream system.
+///
+/// The registry manages plugin lifecycle and provides access to
+/// registered plugins by ID.
+///
+/// # Example
+///
+/// ```rust
+/// let mut registry = PluginRegistry::new();
+///
+/// // Register a narrative framework
+/// registry.register_framework(
+///     "heros_journey",
+///     Box::new(HerosJourneyFramework::new())
+/// );
+///
+/// // Later, retrieve it
+/// if let Some(framework) = registry.get_framework("heros_journey") {
+///     let stages = framework.get_stages();
+/// }
+/// ```
+#[derive(Default)]
+pub struct PluginRegistry {
+    narrative_frameworks: HashMap<String, Arc<dyn NarrativeFramework>>,
+    themes: HashMap<String, Arc<dyn ThemeProvider>>,
+    assessments: HashMap<String, Arc<dyn AssessmentPlugin>>,
+    node_extensions: HashMap<String, Arc<dyn NodeTypeExtension>>,
+}
+
+impl PluginRegistry {
+    /// Create a new empty plugin registry
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Create a registry with all built-in plugins loaded
+    pub fn with_defaults() -> Self {
+        let mut registry = Self::new();
+        registry.load_builtin_plugins();
+        registry
+    }
+
+    // ========================================================================
+    // NARRATIVE FRAMEWORKS
+    // ========================================================================
+
+    /// Register a narrative framework plugin
+    pub fn register_framework(&mut self, id: &str, framework: Arc<dyn NarrativeFramework>) {
+        self.narrative_frameworks.insert(id.to_string(), framework);
+        log::info!("Registered narrative framework: {}", id);
+    }
+
+    /// Get a narrative framework by ID
+    pub fn get_framework(&self, id: &str) -> Option<Arc<dyn NarrativeFramework>> {
+        self.narrative_frameworks.get(id).cloned()
+    }
+
+    /// List all registered narrative frameworks
+    pub fn list_frameworks(&self) -> Vec<String> {
+        self.narrative_frameworks.keys().cloned().collect()
+    }
+
+    // ========================================================================
+    // THEMES
+    // ========================================================================
+
+    /// Register a theme provider plugin
+    pub fn register_theme(&mut self, id: &str, theme: Arc<dyn ThemeProvider>) {
+        self.themes.insert(id.to_string(), theme);
+        log::info!("Registered theme: {}", id);
+    }
+
+    /// Get a theme by ID
+    pub fn get_theme(&self, id: &str) -> Option<Arc<dyn ThemeProvider>> {
+        self.themes.get(id).cloned()
+    }
+
+    /// List all registered themes
+    pub fn list_themes(&self) -> Vec<String> {
+        self.themes.keys().cloned().collect()
+    }
+
+    // ========================================================================
+    // ASSESSMENTS
+    // ========================================================================
+
+    /// Register an assessment plugin
+    pub fn register_assessment(&mut self, id: &str, assessment: Arc<dyn AssessmentPlugin>) {
+        self.assessments.insert(id.to_string(), assessment);
+        log::info!("Registered assessment: {}", id);
+    }
+
+    /// Get an assessment plugin by ID
+    pub fn get_assessment(&self, id: &str) -> Option<Arc<dyn AssessmentPlugin>> {
+        self.assessments.get(id).cloned()
+    }
+
+    /// List all registered assessments
+    pub fn list_assessments(&self) -> Vec<String> {
+        self.assessments.keys().cloned().collect()
+    }
+
+    // ========================================================================
+    // NODE EXTENSIONS
+    // ========================================================================
+
+    /// Register a node type extension
+    pub fn register_node_extension(&mut self, id: &str, extension: Arc<dyn NodeTypeExtension>) {
+        self.node_extensions.insert(id.to_string(), extension);
+        log::info!("Registered node extension: {}", id);
+    }
+
+    /// Get a node extension by type ID
+    pub fn get_node_extension(&self, type_id: &str) -> Option<Arc<dyn NodeTypeExtension>> {
+        self.node_extensions.get(type_id).cloned()
+    }
+
+    /// List all registered node extensions
+    pub fn list_node_extensions(&self) -> Vec<String> {
+        self.node_extensions.keys().cloned().collect()
+    }
+
+    // ========================================================================
+    // UTILITIES
+    // ========================================================================
+
+    /// Load all built-in plugins
+    ///
+    /// This will be expanded as we create built-in plugins:
+    /// - Hero's Journey framework
+    /// - Freytag's Pyramid framework
+    /// - Blank framework
+    /// - Anime theme
+    /// - Military theme
+    /// - Fantasy theme
+    fn load_builtin_plugins(&mut self) {
+        log::info!("Loading built-in plugins...");
+
+        // TODO: Register built-in plugins here as they're implemented
+        // Example:
+        // self.register_framework("heros_journey", Arc::new(HerosJourneyFramework::new()));
+        // self.register_theme("anime", Arc::new(AnimeTheme::new()));
+
+        log::info!("Built-in plugins loaded");
+    }
+
+    /// Get total count of all registered plugins
+    pub fn plugin_count(&self) -> usize {
+        self.narrative_frameworks.len()
+            + self.themes.len()
+            + self.assessments.len()
+            + self.node_extensions.len()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_registry_creation() {
+        let registry = PluginRegistry::new();
+        assert_eq!(registry.plugin_count(), 0);
+    }
+
+    #[test]
+    fn test_list_empty() {
+        let registry = PluginRegistry::new();
+        assert!(registry.list_frameworks().is_empty());
+        assert!(registry.list_themes().is_empty());
+        assert!(registry.list_assessments().is_empty());
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\architect.rs
+================================================================================
+
+use crate::handlers::architect::generate_blueprint;
+use crate::AppState;
+use axum::{routing::post, Router};
+
+pub fn architect_routes(_state: &AppState) -> Router<AppState> {
+    Router::new().route("/api/architect/blueprint", post(generate_blueprint))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\character_routes.rs
+================================================================================
+
+// use crate::handlers::character::create_character;
+use crate::state::AppState;
+use axum::{routing::post, Router};
+
+pub fn character_routes(state: &AppState) -> Router<AppState> {
+    Router::new() //.route("/api/character/create", post(create_character))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\debug.rs
+================================================================================
+
+use crate::domain::railway::WordDefinition;
+use crate::services::weigh_station::WeighStation;
+use crate::state::AppState;
+use axum::{extract::Query, response::Json, routing::get, Router};
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+pub struct WeighParams {
+    word: String,
+}
+
+pub fn debug_routes() -> Router<AppState> {
+    Router::new().route("/weigh", get(weigh_word))
+}
+
+async fn weigh_word(Query(params): Query<WeighParams>) -> Json<WordDefinition> {
+    let definition = WeighStation::weigh_cargo(&params.word);
+    Json(definition)
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\expert.rs
+================================================================================
+
+use crate::handlers::expert::{get_graph, save_graph};
+use crate::AppState;
+use axum::{routing::get, Router};
+
+pub fn expert_routes(state: &AppState) -> Router<AppState> {
+    Router::new().route("/api/expert/graph", get(get_graph).post(save_graph))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\knowledge.rs
+================================================================================
+
+// Knowledge Base / RAG Routes
+use crate::handlers::knowledge::{search_knowledge, upload_knowledge};
+use crate::state::AppState;
+use axum::{
+    routing::{get, post},
+    Router,
+};
+
+pub fn knowledge_routes() -> Router<AppState> {
+    Router::new()
+        .route("/api/knowledge/upload", post(upload_knowledge))
+        .route("/api/knowledge/search", post(search_knowledge))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\mod.rs
+================================================================================
+
+// pub mod ai;
+pub mod ai_mirror;
+pub mod architect; // [NEW] Blueprint AI generation
+pub mod expert;
+pub mod knowledge; // [NEW] - RAG Knowledge Base routes
+pub mod persona;
+pub mod player;
+pub mod research;
+// pub mod vaam;
+pub mod campaign_routes;
+pub mod character_routes;
+pub mod debug;
+pub mod model_routes;
+pub mod pete; // [NEW]
+pub mod recharge;
+pub mod scenarios;
+pub mod simulation; // [NEW] // [NEW] // [NEW]
+pub mod story_graphs; // [NEW] Story graph persistence
+pub mod weigh_station_routes; // Enabled // [NEW] // [NEW]
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\persona.rs
+================================================================================
+
+use crate::AppState;
+use axum::{
+    routing::{get, post},
+    Router,
+};
+
+use crate::handlers::persona::{get_archetypes, get_dilemmas, submit_quiz};
+
+pub fn persona_routes(app_state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/dilemmas", get(get_dilemmas))
+        .route("/api/archetypes", get(get_archetypes))
+        .route("/api/submit_quiz", post(submit_quiz))
+        .with_state(app_state.clone())
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\pete.rs
+================================================================================
+
+use crate::services::model_manager::ModelDefinition;
+use crate::AppState;
+use axum::{
+    extract::{Json, State},
+    response::IntoResponse,
+    routing::{get, post},
+    Router,
+};
+use serde::{Deserialize, Serialize};
+
+pub fn pete_routes(state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/pete/models", get(list_models))
+        .route("/api/pete/models/download", post(download_model))
+        .route("/api/pete/chat", post(chat_with_pete))
+        .with_state(state.clone())
+}
+
+async fn list_models(State(state): State<AppState>) -> impl IntoResponse {
+    let manager = state.model_manager.lock().await;
+    let models = crate::services::model_manager::ModelManager::list_available_models();
+
+    // Enrich with status (downloaded or not)
+    let enriched_models: Vec<EnrichedModelDefinition> = models
+        .into_iter()
+        .map(|m| {
+            let downloaded = manager.has_model(&m.alias);
+            EnrichedModelDefinition {
+                definition: m,
+                downloaded,
+            }
+        })
+        .collect();
+
+    Json(enriched_models)
+}
+
+#[derive(Deserialize)]
+struct DownloadRequest {
+    alias: String,
+}
+
+async fn download_model(
+    State(state): State<AppState>,
+    Json(payload): Json<DownloadRequest>,
+) -> impl IntoResponse {
+    let mut manager = state.model_manager.lock().await;
+    let models = crate::services::model_manager::ModelManager::list_available_models();
+
+    if let Some(model_def) = models.iter().find(|m| m.alias == payload.alias) {
+        match manager.download_model(model_def).await {
+            Ok(_) => {
+                Json(serde_json::json!({ "status": "success", "message": "Model downloaded" }))
+            }
+            Err(e) => Json(serde_json::json!({ "status": "error", "message": e.to_string() })),
+        }
+    } else {
+        Json(serde_json::json!({ "status": "error", "message": "Model not found" }))
+    }
+}
+
+#[derive(Deserialize)]
+struct ChatRequest {
+    message: String,
+}
+
+use domain_physics::components::{AskPeteEvent, PeteResponseEvent};
+
+async fn chat_with_pete(
+    State(state): State<AppState>,
+    Json(payload): Json<ChatRequest>,
+) -> impl IntoResponse {
+    // 1. Construct Event
+    let ask_event = AskPeteEvent {
+        content: payload.message.clone(),
+        context: "Direct Chat".to_string(), // TODO: Get actual context if possible
+    };
+
+    // 2. Push to Bevy Inbox (so game knows about it)
+    if let Ok(mut inbox) = state.pete_command_inbox.0.write() {
+        inbox.push(ask_event);
+    }
+
+    // 3. Get Response from Socratic Engine
+    // We need to lock the engine to use it
+    let mut engine = state.socratic_engine.write().await;
+
+    // Create a temporary session context
+    // TODO: Retrieve actual session context from DB or Memory
+    let context = infra_ai::socratic_engine::SessionContext {
+        session_id: uuid::Uuid::new_v4(),
+        user_id: 1, // Placeholder
+        archetype: None,
+        focus_area: Some("chat".to_string()),
+    };
+
+    match engine.respond(&payload.message, &context).await {
+        Ok(response) => {
+            // 4. Push Response to Bevy Outbox (so game knows about it)
+            let response_event = PeteResponseEvent {
+                content: response.text.clone(),
+            };
+            if let Ok(mut outbox) = state.pete_response_outbox.0.write() {
+                outbox.push(response_event);
+            }
+
+            Json(serde_json::json!({ "status": "success", "data": response }))
+        }
+        Err(e) => Json(serde_json::json!({ "status": "error", "message": e.to_string() })),
+    }
+}
+
+#[derive(Serialize)]
+struct EnrichedModelDefinition {
+    #[serde(flatten)]
+    definition: ModelDefinition,
+    downloaded: bool,
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\player.rs
+================================================================================
+
+use crate::AppState;
+use axum::{
+    routing::{get, post},
+    Router,
+};
+
+use crate::handlers::player::{
+    get_journal_data, get_player_character, get_player_profile, get_profile_data,
+    handle_submit_command,
+};
+
+pub fn player_routes(app_state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/profile_data", get(get_profile_data))
+        .route("/api/player_character", get(get_player_character))
+        .route("/api/journal_data", get(get_journal_data))
+        .route("/api/submit_command", post(handle_submit_command))
+        .route("/api/player_profile", get(get_player_profile))
+        .with_state(app_state.clone())
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\recharge.rs
+================================================================================
+
+use crate::handlers::recharge::{get_department_report, report_miles};
+use crate::AppState;
+use axum::{
+    routing::{get, post},
+    Router,
+};
+
+pub fn recharge_routes(state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/recharge/report", post(report_miles))
+        .route("/api/recharge/department", get(get_department_report))
+        .with_state(state.clone())
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\research.rs
+================================================================================
+
+use crate::handlers::research::{get_research_log, log_research_event};
+use crate::handlers::telemetry::log_telemetry;
+use crate::services::notebook_lm::export_notebook_lm;
+use crate::AppState;
+use axum::{
+    routing::{get, post},
+    Router,
+};
+
+pub fn research_routes(state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/research/logs", get(get_research_log))
+        .route("/api/research/log", post(log_research_event))
+        // New Interface A Routes
+        .route("/api/telemetry", post(log_telemetry))
+        .route("/api/research/export/notebooklm", get(export_notebook_lm))
+        .with_state(state.clone())
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\scenarios.rs
+================================================================================
+
+use crate::AppState;
+use axum::{extract::State, response::IntoResponse, routing::get, Json, Router};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Scenario {
+    pub id: i32,
+    pub title: String,
+    pub description: String,
+    pub difficulty: String,
+    pub status: String,
+    pub tags: Vec<String>,
+}
+
+pub fn scenarios_routes(state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/scenarios", get(list_scenarios))
+        .with_state(state.clone())
+}
+
+async fn list_scenarios(State(state): State<AppState>) -> impl IntoResponse {
+    let pool = match &state.pool {
+        Some(p) => p,
+        None => return Json(vec![]), // Return empty if no DB
+    };
+
+    let scenarios = sqlx::query_as::<_, Scenario>(
+        "SELECT id, title, description, difficulty, status, tags FROM scenarios ORDER BY id",
+    )
+    .fetch_all(pool)
+    .await
+    .unwrap_or_else(|e| {
+        eprintln!("Failed to fetch scenarios: {}", e);
+        vec![]
+    });
+
+    Json(scenarios)
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\simulation.rs
+================================================================================
+
+use crate::handlers::simulation;
+use crate::state::AppState;
+use axum::{routing::get, Router};
+
+pub fn simulation_routes() -> Router<AppState> {
+    Router::new().route(
+        "/api/simulation/state",
+        get(simulation::get_simulation_state),
+    )
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\story.rs
+================================================================================
+
+use crate::AppState;
+use axum::{routing::post, Router};
+
+use crate::handlers::story::generate_story;
+
+pub fn story_routes(app_state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/story/generate", post(generate_story))
+        .with_state(app_state.clone())
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\story_graphs.rs
+================================================================================
+
+use crate::error::{AppError, Result};
+use crate::AppState;
+use axum::{
+    extract::{Path, State},
+    routing::{get, post, put},
+    Json, Router,
+};
+use pete_core::expert::StoryGraph;
+use serde::{Deserialize, Serialize};
+use sqlx::types::JsonValue;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SaveStoryGraphRequest {
+    pub title: String,
+    pub subject: Option<String>,
+    pub literary_device: Option<String>,
+    pub focus: Option<f32>,
+    pub vocabulary: Vec<String>,
+    pub graph_data: StoryGraph,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StoryGraphResponse {
+    pub id: i32,
+    pub title: String,
+    pub subject: Option<String>,
+    pub literary_device: Option<String>,
+    pub focus: Option<f32>,
+    pub vocabulary: Vec<String>,
+    pub graph_data: StoryGraph,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+struct StoryGraphRow {
+    id: i32,
+    title: String,
+    subject: Option<String>,
+    literary_device: Option<String>,
+    focus: Option<f32>,
+    vocabulary: Vec<String>,
+    graph_data: JsonValue,
+    created_at: chrono::DateTime<chrono::Utc>,
+    updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+pub fn story_graph_routes(state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route(
+            "/api/story_graphs",
+            post(save_story_graph).get(list_story_graphs),
+        )
+        .route(
+            "/api/story_graphs/:id",
+            get(get_story_graph).put(update_story_graph),
+        )
+        .with_state(state.clone())
+}
+
+/// POST /api/story_graphs - Save a new story graph
+async fn save_story_graph(
+    State(state): State<AppState>,
+    Json(payload): Json<SaveStoryGraphRequest>,
+) -> Result<Json<StoryGraphResponse>> {
+    let pool = state.pool.as_ref().ok_or(AppError::InternalServerError)?;
+
+    let graph_json = serde_json::to_value(&payload.graph_data)
+        .map_err(|e| anyhow::anyhow!("Failed to serialize graph: {}", e))?;
+
+    let row = sqlx::query_as::<_, StoryGraphRow>(
+        r#"
+        INSERT INTO story_graphs (title, subject, literary_device, focus, vocabulary,graph_data)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, title, subject, literary_device, focus, vocabulary, graph_data, created_at, updated_at
+        "#,
+    )
+    .bind(&payload.title)
+    .bind(&payload.subject)
+    .bind(&payload.literary_device)
+    .bind(payload.focus)
+    .bind(&payload.vocabulary)
+    .bind(&graph_json)
+    .fetch_one(pool)
+    .await?;
+
+    let graph_data: StoryGraph = serde_json::from_value(row.graph_data)
+        .map_err(|e| anyhow::anyhow!("Failed to deserialize graph: {}", e))?;
+
+    Ok(Json(StoryGraphResponse {
+        id: row.id,
+        title: row.title,
+        subject: row.subject,
+        literary_device: row.literary_device,
+        focus: row.focus,
+        vocabulary: row.vocabulary,
+        graph_data,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+    }))
+}
+
+/// GET /api/story_graphs - List all story graphs
+async fn list_story_graphs(State(state): State<AppState>) -> Result<Json<Vec<StoryGraphResponse>>> {
+    let pool = state.pool.as_ref().ok_or(AppError::InternalServerError)?;
+
+    let rows = sqlx::query_as::<_, StoryGraphRow>(
+        r#"
+        SELECT id, title, subject, literary_device, focus, vocabulary, graph_data, created_at, updated_at
+        FROM story_graphs
+        ORDER BY updated_at DESC
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let responses: Result<Vec<StoryGraphResponse>> = rows
+        .into_iter()
+        .map(|row| {
+            let graph_data: StoryGraph = serde_json::from_value(row.graph_data)
+                .map_err(|e| anyhow::anyhow!("Failed to deserialize graph: {}", e))?;
+
+            Ok(StoryGraphResponse {
+                id: row.id,
+                title: row.title,
+                subject: row.subject,
+                literary_device: row.literary_device,
+                focus: row.focus,
+                vocabulary: row.vocabulary,
+                graph_data,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+            })
+        })
+        .collect();
+
+    Ok(Json(responses?))
+}
+
+/// GET /api/story_graphs/:id - Get a specific story graph
+async fn get_story_graph(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+) -> Result<Json<StoryGraphResponse>> {
+    let pool = state.pool.as_ref().ok_or(AppError::InternalServerError)?;
+
+    let row = sqlx::query_as::<_, StoryGraphRow>(
+        r#"
+        SELECT id, title, subject, literary_device, focus, vocabulary, graph_data, created_at, updated_at
+        FROM story_graphs
+        WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await?;
+
+    let graph_data: StoryGraph = serde_json::from_value(row.graph_data)
+        .map_err(|e| anyhow::anyhow!("Failed to deserialize graph: {}", e))?;
+
+    Ok(Json(StoryGraphResponse {
+        id: row.id,
+        title: row.title,
+        subject: row.subject,
+        literary_device: row.literary_device,
+        focus: row.focus,
+        vocabulary: row.vocabulary,
+        graph_data,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+    }))
+}
+
+/// PUT /api/story_graphs/:id - Update an existing story graph
+async fn update_story_graph(
+    State(state): State<AppState>,
+    Path(id): Path<i32>,
+    Json(payload): Json<SaveStoryGraphRequest>,
+) -> Result<Json<StoryGraphResponse>> {
+    let pool = state.pool.as_ref().ok_or(AppError::InternalServerError)?;
+
+    let graph_json = serde_json::to_value(&payload.graph_data)
+        .map_err(|e| anyhow::anyhow!("Failed to serialize graph: {}", e))?;
+
+    let row = sqlx::query_as::<_, StoryGraphRow>(
+        r#"
+        UPDATE story_graphs
+        SET title = $1, subject = $2, literary_device = $3, focus = $4, vocabulary = $5, graph_data = $6
+        WHERE id = $7
+        RETURNING id, title, subject, literary_device, focus, vocabulary, graph_data, created_at, updated_at
+        "#,
+    )
+    .bind(&payload.title)
+    .bind(&payload.subject)
+    .bind(&payload.literary_device)
+    .bind(payload.focus)
+    .bind(&payload.vocabulary)
+    .bind(&graph_json)
+    .bind(id)
+    .fetch_one(pool)
+    .await?;
+
+    let graph_data: StoryGraph = serde_json::from_value(row.graph_data)
+        .map_err(|e| anyhow::anyhow!("Failed to deserialize graph: {}", e))?;
+
+    Ok(Json(StoryGraphResponse {
+        id: row.id,
+        title: row.title,
+        subject: row.subject,
+        literary_device: row.literary_device,
+        focus: row.focus,
+        vocabulary: row.vocabulary,
+        graph_data,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+    }))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\vaam.rs
+================================================================================
+
+use axum::{
+    routing::{get, post},
+    Router,
+};
+use crate::AppState;
+
+use crate::handlers::vaam::{get_context_inventory, log_word_usage};
+
+pub fn vaam_routes(app_state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route("/api/vaam/context/:tag", get(get_context_inventory))
+        .route("/api/vaam/log", post(log_word_usage))
+        .with_state(app_state.clone())
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\routes\weigh_station_routes.rs
+================================================================================
+
+use axum::{
+    extract::{Json, State},
+    response::IntoResponse,
+    routing::post,
+    Router,
+};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+use crate::handlers::weigh_station::{WeighStation, WordPhysics};
+use crate::AppState;
+
+#[derive(Deserialize)]
+pub struct WeighRequest {
+    pub word: String,
+}
+
+#[derive(Deserialize)]
+pub struct AnalyzeRequest {
+    pub text: String,
+}
+
+pub fn weigh_station_routes() -> Router<AppState> {
+    Router::new()
+        .route("/weigh", post(weigh_word))
+        .route("/analyze", post(analyze_text))
+}
+
+async fn weigh_word(
+    State(state): State<AppState>,
+    Json(payload): Json<WeighRequest>,
+) -> impl IntoResponse {
+    if let Some(station_mutex) = &state.weigh_station {
+        let mut station = station_mutex.lock().await;
+        match station.process_word(&payload.word).await {
+            Ok(physics) => Json::<WordPhysics>(physics).into_response(),
+            Err(e) => {
+                (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+            }
+        }
+    } else {
+        (
+            axum::http::StatusCode::SERVICE_UNAVAILABLE,
+            "Weigh Station is offline. Llama 3.2 model not found.",
+        )
+            .into_response()
+    }
+}
+
+async fn analyze_text(
+    State(_state): State<AppState>,
+    Json(payload): Json<AnalyzeRequest>,
+) -> impl IntoResponse {
+    // Static method, doesn't need state lock
+    let result = WeighStation::calculate_intrinsic_load(&payload.text);
+    Json(result).into_response()
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\services\downloader.rs
+================================================================================
+
+use anyhow::Result;
+use futures_util::StreamExt;
+use std::fs::File;
+use std::io::Write;
+use std::path::PathBuf;
+use tokio::sync::mpsc::Sender;
+
+pub struct DownloadProgress {
+    pub percent: f32,
+    pub downloaded_bytes: u64,
+    pub total_bytes: u64,
+}
+
+pub async fn download_file(
+    url: String,
+    path: PathBuf,
+    progress_sender: Sender<DownloadProgress>,
+) -> Result<()> {
+    // Create parent directories if they don't exist
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    let client = reqwest::Client::new();
+    let response = client.get(&url).send().await?;
+    let total_size = response.content_length().unwrap_or(0);
+
+    let mut stream = response.bytes_stream();
+    let mut file = File::create(&path)?;
+    let mut downloaded: u64 = 0;
+
+    while let Some(item) = stream.next().await {
+        let chunk = item?;
+        file.write_all(&chunk)?;
+
+        downloaded += chunk.len() as u64;
+
+        let percent = if total_size > 0 {
+            (downloaded as f32 / total_size as f32) * 100.0
+        } else {
+            0.0
+        };
+
+        // Ignore send errors (receiver might have dropped)
+        let _ = progress_sender
+            .send(DownloadProgress {
+                percent,
+                downloaded_bytes: downloaded,
+                total_bytes: total_size,
+            })
+            .await;
+    }
+
+    Ok(())
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\services\mod.rs
+================================================================================
+
+//! Services module for ASK PEET
+//!
+//! Contains standalone services that aren't tied to specific features:
+//! Services module for ASK PETE
+//!
+//! Services module for ASK PEET
+//!
+//! Contains standalone services that aren't tied to specific features:
+//! Services module for ASK PETE
+//!
+//! Contains standalone services that aren't tied to specific features:
+//! - Model Manager: Downloads and caches AI models from HuggingFace
+//! Services module for ASK PEET
+//!
+//! Contains standalone services that aren't tied to specific features:
+//! Services module for ASK PETE
+//!
+//! Services module for ASK PEET
+//!
+//! Contains standalone services that aren't tied to specific features:
+//! Services module for ASK PETE
+//!
+//! Contains standalone services that aren't tied to specific features:
+//! - Model Manager: Downloads and caches AI models from HuggingFace
+//! - Pete: AI teacher assistant using RAG (Retrieval-Augmented Generation)
+
+pub mod downloader;
+pub mod model_manager;
+pub mod model_registry; // [NEW]
+pub mod notebook_lm;
+pub mod pete; // [NEW]
+pub mod recharge_center;
+pub mod weigh_station;
+
+================================================================================
+FILE: \crates\ask_pete_server\src\services\notebook_lm.rs
+================================================================================
+
+use crate::error::{AppError, Result};
+use crate::state::AppState;
+use axum::{extract::State, Json};
+use serde::{Deserialize, Serialize};
+use sqlx::Row;
+
+#[derive(Serialize)]
+pub struct NotebookLMExport {
+    pub report_title: String,
+    pub generated_at: String,
+    pub data: Vec<ExportRow>,
+}
+
+#[derive(Serialize, sqlx::FromRow)]
+pub struct ExportRow {
+    pub user_id: String,
+    pub event_type: String,
+    pub total_value: f32,
+    pub count: i64,
+}
+
+pub async fn export_notebook_lm(
+    State(app_state): State<AppState>,
+) -> Result<Json<NotebookLMExport>> {
+    let pool = match app_state.pool {
+        Some(pool) => pool,
+        None => return Err(AppError::InternalServerError), // Can't export in sim mode
+    };
+
+    // Aggregation query for "Academic Impact Report"
+    // Sums up values per user per event type
+    let rows = sqlx::query_as::<_, ExportRow>(
+        r#"
+        SELECT 
+            user_id, 
+            event_type, 
+            SUM(value) as total_value, 
+            COUNT(*) as count
+        FROM telemetry_logs
+        GROUP BY user_id, event_type
+        ORDER BY user_id, event_type
+        "#,
+    )
+    .fetch_all(&pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Database error: {:?}", e);
+        AppError::InternalServerError
+    })?;
+
+    let export = NotebookLMExport {
+        report_title: "Ask Pete Academic Impact Report".to_string(),
+        generated_at: chrono::Utc::now().to_rfc3339(),
+        data: rows,
+    };
+
+    Ok(Json(export))
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\services\pete.rs
+================================================================================
+
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
+
+/// Pete - AI Teacher Assistant for ASK PETE
+///
+/// Pete helps instructional designers create better scenarios by:
+/// - Analyzing scenario structure and vocabulary
+/// - Providing real-time pedagogical suggestions
+/// - Recommending appropriate plugins and models
+/// - Citing instructional design best practices
+///
+/// Architecture inspired by Open Notebook's multi-model orchestration,
+/// but implemented in pure Rust with local vector DB RAG.
+pub struct PeteAssistant {
+    // TODO: Add AI orchestrator
+    // TODO: Add vector DB client
+    // TODO: Add knowledge base
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PeteResponse {
+    pub answer: String,
+    pub citations: Vec<String>,
+    pub confidence: f32,
+    pub suggestions: Vec<PeteSuggestion>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PeteSuggestion {
+    pub category: SuggestionCategory,
+    pub severity: Severity,
+    pub message: String,
+    pub source: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum SuggestionCategory {
+    CognitiveLoad,
+    VocabularyOptimization,
+    PluginRecommendation,
+    Accessibility,
+    BestPractice,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum Severity {
+    Info,
+    Warning,
+    Critical,
+}
+
+impl PeteAssistant {
+    pub fn new() -> Result<Self> {
+        // TODO: Initialize AI orchestrator
+        // TODO: Initialize vector DB connection
+        // TODO: Load knowledge base
+
+        Ok(Self {})
+    }
+
+    /// Answer a teacher's question using RAG
+    pub async fn answer_question(&self, _question: &str) -> Result<PeteResponse> {
+        // TODO: Implement RAG pipeline
+        // 1. Query vector DB for relevant knowledge
+        // 2. Build context-aware prompt
+        // 3. Generate response using Gemma model
+        // 4. Extract citations
+
+        Ok(PeteResponse {
+            answer: "Pete is being implemented! Check back soon.".to_string(),
+            citations: vec![],
+            confidence: 0.0,
+            suggestions: vec![],
+        })
+    }
+
+    /// Analyze a scenario and provide suggestions
+    pub async fn analyze_scenario(&self, _scenario: &ScenarioData) -> Vec<PeteSuggestion> {
+        // TODO: Implement scenario analysis
+        // - Check vocab/node ratio
+        // - Identify missing reflection checkpoints
+        // - Analyze cognitive load distribution
+        // - Verify framework appropriateness
+
+        vec![]
+    }
+}
+
+/// Temporary scenario data structure
+/// TODO: Replace with actual domain model when implemented
+#[derive(Debug, Clone)]
+pub struct ScenarioData {
+    pub nodes: Vec<String>,
+    pub vocabulary: Vec<String>,
+    pub framework: Option<String>,
+}
+
+impl Default for PeteAssistant {
+    fn default() -> Self {
+        Self::new().expect("Failed to create PeteAssistant")
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\services\recharge_center.rs
+================================================================================
+
+use pete_core::economy::{Coal, CoalUsageLog};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JournalVoucher {
+    pub voucher_id: String,
+    pub department: String,
+    pub amount: f64,
+    pub description: String,
+    pub timestamp: i64,
+}
+
+pub struct RechargeCenter {
+    // In-memory storage for MVP. In production, this would be a DB.
+    logs: Vec<CoalUsageLog>,
+}
+
+impl RechargeCenter {
+    pub fn new() -> Self {
+        Self { logs: Vec::new() }
+    }
+
+    pub fn log_usage(&mut self, log: CoalUsageLog) {
+        self.logs.push(log);
+    }
+
+    pub fn generate_monthly_voucher(&self, department: &str) -> JournalVoucher {
+        // Filter logs for the department (mocking department association via student_id for now)
+        let dept_logs: Vec<CoalUsageLog> = self
+            .logs
+            .iter()
+            .filter(|l| l.context.contains(department)) // Simple mock filter
+            .cloned()
+            .collect();
+
+        let total_cost = CoalUsageLog::calculate_recharge_cost(&dept_logs);
+
+        JournalVoucher {
+            voucher_id: format!("JV-{}-{}", department, chrono::Utc::now().timestamp()),
+            department: department.to_string(),
+            amount: total_cost,
+            description: format!("Internal Recharge for {} Coal Usage", department),
+            timestamp: chrono::Utc::now().timestamp(),
+        }
+    }
+
+    pub fn get_total_usage(&self) -> f64 {
+        CoalUsageLog::calculate_recharge_cost(&self.logs)
+    }
+}
+
+================================================================================
+FILE: \crates\ask_pete_server\src\services\weigh_station.rs
+================================================================================
+
+use crate::domain::railway::{TrainCar, VocabularyTier, WordDefinition};
+
+pub struct WeighStation;
+
+impl WeighStation {
+    /// Calculates the "Intrinsic Load" (Weight) of a word based on heuristics.
+    /// In a full implementation, this would use an LLM or frequency dictionary.
+    pub fn weigh_cargo(word: &str) -> WordDefinition {
+        let length = word.len();
+        let (weight, tier) = match length {
+            0..=4 => (5.0, VocabularyTier::Tier1), // Short words (e.g., "Cat")
+            5..=8 => (20.0, VocabularyTier::Tier2), // Medium words (e.g., "Planet")
+            _ => (50.0, VocabularyTier::Tier3),    // Long words (e.g., "Photosynthesis")
+        };
+
+        WordDefinition {
+            word: word.to_string(),
+            definition: format!("Definition of {}", word), // Placeholder
+            weight,
+            tier,
+            embedding: vec![], // Placeholder for actual embeddings
+        }
+    }
+
+    /// Validates if a TrainCar is safe to depart (not overloaded).
+    pub fn validate_car(car: &TrainCar) -> Result<bool, String> {
+        if car.is_overloaded() {
+            return Err(format!(
+                "SAFETY LOCKOUT: Cognitive Overload Detected! Current: {} / Max: {}",
+                car.current_load, car.max_cognitive_capacity
+            ));
+        }
+        Ok(true)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_weigh_cargo() {
+        let w1 = WeighStation::weigh_cargo("Cat");
+        assert_eq!(w1.weight, 5.0);
+        assert_eq!(w1.tier, VocabularyTier::Tier1);
+
+        let w2 = WeighStation::weigh_cargo("Planet");
+        assert_eq!(w2.weight, 20.0);
+        assert_eq!(w2.tier, VocabularyTier::Tier2);
+
+        let w3 = WeighStation::weigh_cargo("Photosynthesis");
+        assert_eq!(w3.weight, 50.0);
+        assert_eq!(w3.tier, VocabularyTier::Tier3);
+    }
+}
+

@@ -9,7 +9,7 @@ pub mod research;
 // pub mod vaam;
 pub mod campaign_routes;
 pub mod character_routes;
-pub mod debug;
+// pub mod debug;
 pub mod model_routes;
 pub mod pete; // [NEW]
 pub mod recharge;

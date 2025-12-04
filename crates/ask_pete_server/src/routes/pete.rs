@@ -1,18 +1,20 @@
 use crate::services::model_manager::ModelDefinition;
 use crate::AppState;
 use axum::{
-    extract::{Json, State},
+    extract::{Json, Path, State},
     response::IntoResponse,
     routing::{get, post},
     Router,
 };
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 pub fn pete_routes(state: &AppState) -> Router<AppState> {
     Router::new()
         .route("/api/pete/models", get(list_models))
         .route("/api/pete/models/download", post(download_model))
-        .route("/api/pete/chat", post(chat_with_pete))
+        .route("/api/pete/chat", post(submit_chat)) // [MODIFIED] Async Submit
+        .route("/api/pete/chat/:job_id", get(check_chat)) // [NEW] Poll Status
         .with_state(state.clone())
 }
 
@@ -64,49 +66,34 @@ struct ChatRequest {
     message: String,
 }
 
-use domain_physics::components::{AskPeteEvent, PeteResponseEvent};
-
-async fn chat_with_pete(
+// 1. Submit (Fast)
+async fn submit_chat(
     State(state): State<AppState>,
     Json(payload): Json<ChatRequest>,
 ) -> impl IntoResponse {
-    // 1. Construct Event
-    let ask_event = AskPeteEvent {
-        content: payload.message.clone(),
-        context: "Direct Chat".to_string(), // TODO: Get actual context if possible
-    };
+    // Immediately enqueue and return the Ticket ID
+    let job_id = state.chat_queue.enqueue(payload.message).await;
 
-    // 2. Push to Bevy Inbox (so game knows about it)
-    if let Ok(mut inbox) = state.pete_command_inbox.0.write() {
-        inbox.push(ask_event);
-    }
+    // Return 202 Accepted
+    (
+        axum::http::StatusCode::ACCEPTED,
+        Json(serde_json::json!({
+            "job_id": job_id,
+            "status": "Queued",
+            "message": "Pete is thinking..."
+        })),
+    )
+}
 
-    // 3. Get Response from Socratic Engine
-    // We need to lock the engine to use it
-    let mut engine = state.socratic_engine.write().await;
-
-    // Create a temporary session context
-    // TODO: Retrieve actual session context from DB or Memory
-    let context = infra_ai::socratic_engine::SessionContext {
-        session_id: uuid::Uuid::new_v4(),
-        user_id: 1, // Placeholder
-        archetype: None,
-        focus_area: Some("chat".to_string()),
-    };
-
-    match engine.respond(&payload.message, &context).await {
-        Ok(response) => {
-            // 4. Push Response to Bevy Outbox (so game knows about it)
-            let response_event = PeteResponseEvent {
-                content: response.text.clone(),
-            };
-            if let Ok(mut outbox) = state.pete_response_outbox.0.write() {
-                outbox.push(response_event);
-            }
-
-            Json(serde_json::json!({ "status": "success", "data": response }))
-        }
-        Err(e) => Json(serde_json::json!({ "status": "error", "message": e.to_string() })),
+// 2. Poll (Fast)
+async fn check_chat(State(state): State<AppState>, Path(job_id): Path<Uuid>) -> impl IntoResponse {
+    match state.chat_queue.get_status(&job_id) {
+        Some(status) => Json::<crate::services::chat_queue::JobStatus>(status).into_response(),
+        None => (
+            axum::http::StatusCode::NOT_FOUND,
+            Json(serde_json::json!({"error": "Job not found"})),
+        )
+            .into_response(),
     }
 }
 

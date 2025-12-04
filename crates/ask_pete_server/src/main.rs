@@ -38,6 +38,7 @@ mod routes;
 mod services; // Model Manager and Pete AI
 mod state;
 pub use state::AppState;
+mod repositories; // [NEW]
 mod static_assets;
 use crate::domain::player::get_simulated_character;
 use crate::routes::ai_mirror::ai_mirror_routes;
@@ -413,19 +414,30 @@ async fn main() {
     };
 
     // Initialize Weigh Station & Shared Local Model
-    let weigh_station = if let Some(ref model) = shared_local_model {
-        if let Some(db_pool) = pool.clone() {
-            Some(Arc::new(tokio::sync::Mutex::new(
-                crate::handlers::weigh_station::WeighStation::new(db_pool, model.clone()),
-            )))
-        } else {
-            println!("⚠️ Database not available, Weigh Station disabled.");
-            None
-        }
+    let weigh_station = if let Some(db_pool) = pool.clone() {
+        // We pass the optional local model. If it's None, the service will use heuristics only.
+        Some(Arc::new(
+            crate::services::weigh_station::WeighStationService::new(
+                db_pool,
+                shared_local_model.clone(),
+            ),
+        ))
     } else {
-        println!("⚠️ Local AI model not available, Weigh Station disabled.");
+        println!("⚠️ Database not available, Weigh Station disabled.");
         None
     };
+
+    // Initialize Quest Repository
+    let quest_repo: Arc<dyn crate::repositories::quest_repo::QuestRepository> = match pool.clone() {
+        Some(p) => Arc::new(crate::repositories::quest_repo::PostgresQuestRepository::new(p)),
+        None => {
+            println!("⚠️ Database not available, using Mock Quest Repository.");
+            Arc::new(crate::repositories::quest_repo::MockQuestRepository)
+        }
+    };
+
+    // Initialize Chat Queue Service
+    let chat_queue = crate::services::chat_queue::ChatQueueService::new(socratic_engine.clone());
 
     // Create the application state
     let app_state = AppState {
@@ -442,11 +454,13 @@ async fn main() {
         pete_response_outbox,
         shared_physics,
         weigh_station, // Enabled
+        chat_queue,    // [NEW] Job Queue
         shared_campaign_state,
         vote_inbox,
         shared_story_progress: shared_story_progress.0,
         quest_command_inbox,
-        // memory_store,
+        quest_repo, // [NEW]
+                    // memory_store,
     };
 
     // Create Model App State

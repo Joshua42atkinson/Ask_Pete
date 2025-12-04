@@ -4,9 +4,7 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use pete_core::expert::StoryGraph;
 use serde::{Deserialize, Serialize};
-use sqlx::Row;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StartQuestResponse {
@@ -18,27 +16,13 @@ pub async fn start_quest(
     State(state): State<AppState>,
     Path(quest_id): Path<i32>,
 ) -> Result<Json<StartQuestResponse>> {
-    // 1. Load StoryGraph from DB
-    let pool = state.pool.as_ref().ok_or(AppError::InternalServerError)?;
+    // 1. Load Data (Via Repository)
+    let graph = state.quest_repo.get_story_graph(quest_id).await?;
 
-    let row = sqlx::query("SELECT graph_data FROM story_graphs WHERE id = $1")
-        .bind(quest_id)
-        .fetch_optional(pool)
-        .await?
-        .ok_or(AppError::NotFound)?;
-
-    let graph_data: serde_json::Value = row
-        .try_get("graph_data")
-        .map_err(|e| anyhow::anyhow!("Failed to get graph_data: {}", e))?;
-
-    let graph: StoryGraph = serde_json::from_value(graph_data)
-        .map_err(|e| anyhow::anyhow!("Failed to deserialize graph: {}", e))?;
-
-    // 2. Calculate Initial Load via WeighStation (Cognitive Logistics)
+    // 2. Business Logic: Calculate Intrinsic Load (Via Socratic Engine)
     let intrinsic_load = {
-        let engine = state.socratic_engine.read();
-        // Use a read lock to access the engine
-        match engine.await.analyze_load(&graph.title).await {
+        let engine = state.socratic_engine.read().await;
+        match engine.analyze_load(&graph.title).await {
             Ok(profile) => {
                 log::info!(
                     "Cognitive Load Analysis for '{}': {:?}",
@@ -58,14 +42,14 @@ pub async fn start_quest(
         }
     };
 
-    // 3. Update ECS State via Inbox
+    // 3. Game State: Update ECS Inbox
     if let Ok(mut inbox) = state.quest_command_inbox.0.write() {
         inbox.push(domain_physics::components::StartQuestEvent {
             quest_id: quest_id.to_string(),
         });
     }
 
-    // Also update SharedStoryProgress immediately for UI responsiveness (optional but good for UX)
+    // 4. Update Shared Progress (UI Sync)
     if let Ok(mut progress) = state.shared_story_progress.write() {
         progress.current_quest_id = Some(quest_id.to_string());
         if let Some(start_node) = graph.nodes.first() {
@@ -92,13 +76,10 @@ pub struct CompleteQuestResponse {
 pub async fn complete_quest(
     State(state): State<AppState>,
     Path(quest_id): Path<i32>,
-    // In a real app, we'd extract UserId from the token. For MVP, we'll use a hardcoded ID or header.
-    // headers: HeaderMap,
 ) -> Result<Json<CompleteQuestResponse>> {
-    let user_id = 1; // Hardcoded for MVP (The "Student" user)
+    let user_id = 1; // Hardcoded for MVP
 
-    // 1. Calculate Steam Earned (from Physics State)
-    // TODO: PhysicsState needs a steam field added - using velocity * miles as proxy for now
+    // 1. Calculate Steam (Physics State)
     let steam_earned = {
         let physics = state
             .shared_physics
@@ -109,36 +90,11 @@ pub async fn complete_quest(
         (physics.velocity * physics.miles * 0.1) as f64
     };
 
-    // 2. Update Database
-    let pool = state.pool.as_ref().ok_or(AppError::InternalServerError)?;
-
-    let mut tx = pool.begin().await?;
-
-    // Update User Balance
-    let row = sqlx::query(
-        "UPDATE users SET steam_balance = steam_balance + $1 WHERE id = $2 RETURNING steam_balance",
-    )
-    .bind(steam_earned)
-    .bind(user_id)
-    .fetch_one(&mut *tx)
-    .await?;
-
-    let new_balance: f64 = row.try_get("steam_balance")?;
-
-    // Log Completion
-    sqlx::query(
-        "INSERT INTO quest_completions (user_id, quest_id, steam_earned) VALUES ($1, $2, $3)",
-    )
-    .bind(user_id)
-    .bind(quest_id)
-    .bind(steam_earned)
-    .execute(&mut *tx)
-    .await?;
-
-    tx.commit().await?;
-
-    // 3. Reset Physics State (Optional, or let it persist until next quest)
-    // For now, we leave it as "history" of the run.
+    // 2. Persist Data (Via Repository)
+    let new_balance = state
+        .quest_repo
+        .complete_quest_transaction(user_id, quest_id, steam_earned)
+        .await?;
 
     Ok(Json(CompleteQuestResponse {
         success: true,
