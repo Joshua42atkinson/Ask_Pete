@@ -5,13 +5,13 @@ edition = "2021"
 
 [dependencies]
 
-leptos = { workspace = true, features = ["nightly"] }
+leptos = { workspace = true, features = ["nightly", "csr", "hydrate"] }
 serde = { workspace = true, features = ["derive"] }
 uuid = { workspace = true, features = ["v4", "serde"] }
 gloo-console = { workspace = true }
 leptos_router = { workspace = true }
 gloo-timers = { workspace = true, features = ["futures"] }
-gloo-net = { workspace = true }
+
 reqwest = { workspace = true, features = ["json"] }
 pete_core = { package = "ask_pete_core", path = "../ask_pete_core" }
 web-sys = { workspace = true, features = ["HtmlCanvasElement", "CanvasRenderingContext2d", "MouseEvent", "Element", "DomRect"] }

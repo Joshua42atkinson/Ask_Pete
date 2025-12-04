@@ -1,5 +1,6 @@
 use bevy::prelude::Resource;
 use bevy::prelude::*;
+use pete_core::graph_manager::GraphManager;
 use std::sync::{Arc, RwLock};
 
 // Define wrapper resources for Bevy
@@ -14,6 +15,9 @@ pub struct SharedPhysicsResource(pub Arc<RwLock<PhysicsState>>);
 
 #[derive(Resource, Clone)]
 pub struct SharedStoryProgressResource(pub Arc<RwLock<StoryProgress>>);
+
+#[derive(Resource, Clone)]
+pub struct SharedGraphManagerResource(pub Arc<RwLock<GraphManager>>);
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PhysicsState {

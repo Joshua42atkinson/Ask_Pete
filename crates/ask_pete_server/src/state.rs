@@ -29,6 +29,7 @@ pub struct AppState {
     pub vote_inbox: VoteInbox,                                     // [NEW]
     pub shared_story_progress: Arc<RwLock<StoryProgress>>,         // [NEW]
     pub quest_command_inbox: QuestCommandInbox,                    // [NEW]
+    pub shared_graph_manager: Arc<RwLock<pete_core::graph_manager::GraphManager>>, // [NEW]
     pub quest_repo: Arc<dyn crate::repositories::quest_repo::QuestRepository>, // [NEW] Repository Pattern
                                                                                // pub memory_store: Option<Arc<crate::ai::memory::LanceDbConnection>>, // [NEW] - Local Vector DB
 }

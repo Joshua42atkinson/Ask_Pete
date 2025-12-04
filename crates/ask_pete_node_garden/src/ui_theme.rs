@@ -1,4 +1,5 @@
 use crate::theme::makeup::MakeupStyle;
+use leptos::prelude::*;
 /// Boilermaker Industrial Design System
 ///
 /// This module provides the centralized theme system for the "Ask Pete" application,
@@ -8,7 +9,7 @@ use crate::theme::makeup::MakeupStyle;
 /// # Boilermaker Color Palette
 ///
 /// Official Purdue colors and industrial-themed variants for the "Ask Pete" interface.
-use leptos::prelude::*;
+use wasm_bindgen::JsCast;
 
 #[derive(Clone, Debug, Copy)]
 pub struct ThemeContext {
@@ -17,33 +18,20 @@ pub struct ThemeContext {
 }
 
 pub fn provide_theme_context() {
-    // Try to load from local storage
-    let initial_makeup = if let Some(window) = web_sys::window() {
-        if let Ok(Some(storage)) = window.local_storage() {
-            if let Ok(Some(json)) = storage.get_item("pete_makeup_style") {
-                serde_json::from_str(&json).unwrap_or_default()
-            } else {
-                MakeupStyle::default()
-            }
-        } else {
-            MakeupStyle::default()
-        }
+    // Try to load from cookies
+    let initial_makeup = if let Some(cookie_val) = get_cookie("pete_makeup_style") {
+        serde_json::from_str(&cookie_val).unwrap_or_default()
     } else {
         MakeupStyle::default()
     };
 
     let (makeup, set_makeup) = signal(initial_makeup);
 
-    // Persist changes to local storage
+    // Persist changes to cookies
     Effect::new(move |_| {
         let style = makeup.get();
-        if let Some(window) = web_sys::window() {
-            if let Ok(Some(storage)) = window.local_storage() {
-                let _ = storage.set_item(
-                    "pete_makeup_style",
-                    &serde_json::to_string(&style).unwrap_or_default(),
-                );
-            }
+        if let Ok(json) = serde_json::to_string(&style) {
+            set_cookie("pete_makeup_style", &json);
         }
     });
 
@@ -51,6 +39,32 @@ pub fn provide_theme_context() {
         makeup: makeup.into(),
         set_makeup,
     });
+}
+
+fn get_cookie(name: &str) -> Option<String> {
+    let document = web_sys::window()?.document()?;
+    let html_document = document.dyn_into::<web_sys::HtmlDocument>().ok()?;
+    let cookies = html_document.cookie().ok()?;
+    for cookie in cookies.split(';') {
+        let mut parts = cookie.splitn(2, '=');
+        let key = parts.next()?.trim();
+        if key == name {
+            return parts.next().map(|v| v.to_string());
+        }
+    }
+    None
+}
+
+fn set_cookie(name: &str, value: &str) {
+    if let Some(window) = web_sys::window() {
+        if let Some(document) = window.document() {
+            if let Ok(html_document) = document.dyn_into::<web_sys::HtmlDocument>() {
+                // Set for 1 year
+                let cookie = format!("{}={}; path=/; max-age=31536000", name, value);
+                let _ = html_document.set_cookie(&cookie);
+            }
+        }
+    }
 }
 
 pub fn use_theme() -> ThemeContext {

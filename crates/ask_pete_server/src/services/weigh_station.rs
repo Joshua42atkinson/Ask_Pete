@@ -30,12 +30,12 @@ impl WordPhysics {
 }
 
 pub struct WeighStationService {
-    db: PgPool,
+    db: Option<PgPool>,
     llm: Option<LocalModel>, // Optional to handle missing AI
 }
 
 impl WeighStationService {
-    pub fn new(db: PgPool, llm: Option<LocalModel>) -> Self {
+    pub fn new(db: Option<PgPool>, llm: Option<LocalModel>) -> Self {
         Self { db, llm }
     }
 
@@ -84,6 +84,10 @@ impl WeighStationService {
     }
 
     async fn check_depot(&self, word: &str) -> Result<Option<WordPhysics>> {
+        let pool = match &self.db {
+            Some(p) => p,
+            None => return Ok(None),
+        };
         // Use query_as function to avoid compile-time schema check
         let row = sqlx::query_as::<_, WordPhysics>(
             r#"
@@ -92,7 +96,7 @@ impl WeighStationService {
             "#,
         )
         .bind(word)
-        .fetch_optional(&self.db)
+        .fetch_optional(pool)
         .await?;
 
         Ok(row)
@@ -131,6 +135,10 @@ impl WeighStationService {
     }
 
     async fn store_in_depot(&self, p: &WordPhysics) -> Result<()> {
+        let pool = match &self.db {
+            Some(p) => p,
+            None => return Ok(()),
+        };
         sqlx::query(
             r#"
             INSERT INTO vocabulary_words (word, definition, grade_level, tier, weight, tags)
@@ -145,8 +153,67 @@ impl WeighStationService {
         .bind(p.tier)
         .bind(p.weight)
         .bind(&p.tags)
-        .execute(&self.db)
+        .execute(pool)
         .await?;
         Ok(())
     }
+
+    // [NEW] Weigh Node Logic
+    pub async fn weigh_node(&self, content: &str) -> Result<NodePhysics> {
+        // 1. Heuristic Check (Fast Path)
+        // If content is very short, don't waste AI cycles
+        if content.len() < 50 {
+            return Ok(NodePhysics {
+                complexity_score: 1,
+                concept_count: 1,
+                reasoning: "Short text, minimal load.".to_string(),
+            });
+        }
+
+        // 2. AI Inference
+        if let Some(llm) = &self.llm {
+            let prompt = pete_core::prompts::weigh_station::generate_weigh_prompt(content);
+            let system_prompt = pete_core::prompts::weigh_station::WEIGH_STATION_SYSTEM_PROMPT;
+
+            let config = GenerationConfig {
+                max_tokens: 300,
+                temperature: 0.1, // Low temp for consistent scoring
+                ..Default::default()
+            };
+
+            // We need a way to pass system prompt.
+            // Assuming LocalModel supports it or we prepend it.
+            // For now, prepending to user prompt if API doesn't support separate system prompt.
+            // But LocalModel::generate takes (prompt, config).
+            // Let's prepend.
+            let full_prompt = format!("{}\n\n{}", system_prompt, prompt);
+
+            let json_response = llm.generate(full_prompt, config).await?;
+
+            let clean_json = infra_ai::json_utils::extract_json_from_text(&json_response)
+                .unwrap_or_else(|| json_response.to_string());
+
+            let physics: NodePhysics = serde_json::from_str(&clean_json).unwrap_or(NodePhysics {
+                complexity_score: 5,
+                concept_count: 3,
+                reasoning: "Failed to parse AI response, defaulting to medium.".to_string(),
+            });
+
+            Ok(physics)
+        } else {
+            // Fallback
+            Ok(NodePhysics {
+                complexity_score: 3,
+                concept_count: 1,
+                reasoning: "AI offline, heuristic default.".to_string(),
+            })
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct NodePhysics {
+    pub complexity_score: i32,
+    pub concept_count: i32,
+    pub reasoning: String,
 }

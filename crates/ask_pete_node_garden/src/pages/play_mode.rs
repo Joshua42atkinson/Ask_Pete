@@ -30,7 +30,7 @@ pub fn PlayMode() -> impl IntoView {
             .unwrap_or_default();
         if !id.is_empty() {
             leptos::task::spawn_local(async move {
-                if let Ok(g) = get_graph().await {
+                if let Ok(g) = get_graph(Some(id)).await {
                     set_graph.set(Some(g.clone()));
                     // Start at the first node (or find a start node)
                     if let Some(first) = g.nodes.first() {

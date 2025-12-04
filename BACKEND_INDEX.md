@@ -65,7 +65,7 @@ This `backend_source.txt` contains all backend source code from `ask_pete_server
 
 ## API Endpoints
 
-```
+```text
 GET  /api/health              - Health check
 GET  /api/expert/graph        - Load story graph
 POST /api/expert/graph        - Save story graph

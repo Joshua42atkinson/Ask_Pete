@@ -1,5 +1,5 @@
 use leptos::prelude::*;
-use pete_core::expert::StoryNode;
+use pete_core::trainyard::StoryNode;
 
 #[component]
 pub fn OwlDiagnostic(

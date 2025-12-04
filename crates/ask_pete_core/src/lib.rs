@@ -5,9 +5,12 @@ pub mod ai;
 pub mod db;
 pub mod economy;
 pub mod expert;
+pub mod graph_manager; // [NEW] MVP Repair: Simple Graph Manager
 pub mod locomotive;
 pub mod models;
 pub mod narrative_graph;
+pub mod trainyard; // Keeping for now to avoid breaking too much at once, but marked for deletion later
+
 pub mod physics;
 pub mod prompts;
 pub mod railway;
@@ -137,7 +140,7 @@ pub struct Choice {
     pub required_archetype_id: Option<i32>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct QuestStep {
     pub description: String,
     #[serde(default)]
@@ -149,7 +152,7 @@ pub struct QuestStep {
     pub is_major_plot_point: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Quest {
     pub title: String,
     pub chapter_theme: String,

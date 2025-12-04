@@ -1,5 +1,5 @@
 use leptos::prelude::*;
-use pete_core::expert::StoryNode;
+use pete_core::trainyard::StoryNode;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TemplateOption {
@@ -286,9 +286,10 @@ fn create_node(title: &str, content: &str, x: f64, y: f64, load: u8) -> StoryNod
         y,
         passenger_count: load,
         complexity_level: 1,
-        learner_profiles: vec![],
-        gardens_active: vec![],
         required_stats: std::collections::HashMap::new(),
+        context_prompt: String::new(),
+        completion_criteria: String::new(),
+        station_type: Default::default(),
         logic: Default::default(),
         style: Default::default(),
     }

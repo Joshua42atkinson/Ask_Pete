@@ -1,14 +1,14 @@
 {
-  "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-  "title": "Photosynthesis: Fueling the Network",
+  "id": "test_graph_weigh",
+  "title": "Weigh Station Test",
   "nodes": [
     {
-      "id": "node_1",
-      "title": "The Foundry: Chassis Calibration",
-      "content": "Operator, welcome to the Foundry. Before you embark on this mission to understand Photosynthesis, you must calibrate your chassis. This process will determine your optimal learning pathway. Step onto the Testing Plant. We'll measure your Torque (Intellect) and Traction (Grit).",
+      "id": "node_heavy",
+      "title": "Heavy Node",
+      "content": "The concept of cognitive load theory suggests that the human brain has a limited capacity for processing information in working memory. When this capacity is exceeded, learning is hampered. Therefore, instructional design must manage intrinsic, extraneous, and germane load effectively.",
       "x": 0.0,
       "y": 0.0,
-      "passenger_count": 1,
+      "passenger_count": 0,
       "complexity_level": 1,
       "learner_profiles": [],
       "gardens_active": [],
@@ -19,167 +19,13 @@
       },
       "style": {
         "contrast": false,
-        "alignment": "left",
-        "proximity": 1.0
-      }
-    },
-    {
-      "id": "node_2",
-      "title": "The Seed of Knowledge: Potential Energy",
-      "content": "Pete: Operator, your telemetry indicates you possess a Guardian Chassis. Your strength lies in absorbing complex information. Begin here. Imagine a seed. It holds immense potential energy. Like a coiled spring, it's waiting for the right trigger to unleash that energy. This potential is stored in the form of complex molecules, which will become the foundation of a new plant. Consider: [\"Potential Energy: The energy possessed by a body by virtue of its position relative to others, stresses within itself, electric charge, and other factors.\"]",
-      "x": 1.0,
-      "y": 1.0,
-      "passenger_count": 1,
-      "complexity_level": 2,
-      "learner_profiles": [],
-      "gardens_active": [],
-      "required_stats": {},
-      "logic": {
-        "condition": "None",
-        "effect": "None"
+        "alignment": "",
+        "proximity": 0.0
       },
-      "style": {
-        "contrast": false,
-        "alignment": "left",
-        "proximity": 1.0
-      }
-    },
-    {
-      "id": "node_3",
-      "title": "The Sun's Radiance: Energy Input",
-      "content": "The seed needs a catalyst. That catalyst is light – specifically, photons from the sun. Consider: [\"Photon: A particle representing a quantum of light or other electromagnetic radiation. A photon carries energy proportional to the radiation frequency but has zero rest mass.\"] These photons are packets of energy that strike the leaves of the plant. The leaves contain chlorophyll, a pigment that absorbs sunlight. This is the first step in transforming light energy into chemical energy.",
-      "x": 2.0,
-      "y": 0.5,
-      "passenger_count": 1,
-      "complexity_level": 2,
-      "learner_profiles": [],
-      "gardens_active": [],
-      "required_stats": {},
-      "logic": {
-        "condition": "None",
-        "effect": "None"
-      },
-      "style": {
-        "contrast": false,
-        "alignment": "left",
-        "proximity": 1.0
-      }
-    },
-    {
-      "id": "node_4",
-      "title": "The Molecular Machine: Chloroplasts",
-      "content": "The magic happens inside chloroplasts, tiny organelles within the plant cells. These are like miniature factories, each containing stacks of thylakoids where the light-dependent reactions occur. The absorbed light energy splits water molecules (H2O) into hydrogen ions, electrons, and oxygen. The oxygen is released as a byproduct – the very air we breathe! The electrons are energized and passed along an electron transport chain, generating ATP (adenosine triphosphate) and NADPH, energy-carrying molecules.",
-      "x": 3.0,
-      "y": 1.0,
-      "passenger_count": 1,
-      "complexity_level": 3,
-      "learner_profiles": [],
-      "gardens_active": [],
-      "required_stats": {},
-      "logic": {
-        "condition": "None",
-        "effect": "None"
-      },
-      "style": {
-        "contrast": false,
-        "alignment": "left",
-        "proximity": 1.0
-      }
-    },
-    {
-      "id": "node_5",
-      "title": "The Calvin Cycle: Carbon Fixation",
-      "content": "Now for the Calvin Cycle, also known as the light-independent reactions. This takes place in the stroma, the fluid-filled space around the thylakoids. Here, carbon dioxide (CO2) from the atmosphere is 'fixed' – meaning it's incorporated into an organic molecule. Using the energy from ATP and NADPH generated during the light-dependent reactions, the plant converts CO2 into glucose (C6H12O6), a simple sugar. This glucose is then used as fuel for the plant's growth and development.",
-      "x": 4.0,
-      "y": 0.5,
-      "passenger_count": 1,
-      "complexity_level": 3,
-      "learner_profiles": [],
-      "gardens_active": [],
-      "required_stats": {},
-      "logic": {
-        "condition": "None",
-        "effect": "None"
-      },
-      "style": {
-        "contrast": false,
-        "alignment": "left",
-        "proximity": 1.0
-      }
-    },
-    {
-      "id": "node_6",
-      "title": "From Sunlight to Sugar: Kinetic Energy",
-      "content": "Pete: Operator, the cycle is complete. The plant has successfully converted light energy into chemical energy in the form of glucose. This glucose represents stored kinetic energy. The plant now has the fuel to perform work, to grow, to reproduce, to thrive. You have witnessed the miracle of photosynthesis. Consider: [\"Kinetic Energy: Energy which a body possesses by virtue of being in motion.\"]",
-      "x": 5.0,
-      "y": 1.0,
-      "passenger_count": 1,
-      "complexity_level": 2,
-      "learner_profiles": [],
-      "gardens_active": [],
-      "required_stats": {},
-      "logic": {
-        "condition": "None",
-        "effect": "None"
-      },
-      "style": {
-        "contrast": false,
-        "alignment": "left",
-        "proximity": 1.0
-      }
-    },
-    {
-      "id": "node_7",
-      "title": "The Heat Sink: Regeneration Zone",
-      "content": "Pete: Operator, your cognitive load is reaching critical levels. Proceed to the Heat Sink (Engineering Fountain) for a regeneration cycle. Do not stand in the spray during peak hours, or you risk Scalding Damage (Burnout). During low-load, it is a \"Regeneration Zone\" where you can refill your coolant tanks.",
-      "x": 6.0,
-      "y": 0.5,
-      "passenger_count": 1,
-      "complexity_level": 1,
-      "learner_profiles": [],
-      "gardens_active": [],
-      "required_stats": {},
-      "logic": {
-        "condition": "None",
-        "effect": "None"
-      },
-      "style": {
-        "contrast": false,
-        "alignment": "left",
-        "proximity": 1.0
-      }
+      "quest": null,
+      "mass": null,
+      "analysis_hash": null
     }
   ],
-  "connections": [
-    {
-      "id": "conn_1",
-      "from_node": "node_1",
-      "to_node": "node_2"
-    },
-    {
-      "id": "conn_2",
-      "from_node": "node_2",
-      "to_node": "node_3"
-    },
-    {
-      "id": "conn_3",
-      "from_node": "node_3",
-      "to_node": "node_4"
-    },
-    {
-      "id": "conn_4",
-      "from_node": "node_4",
-      "to_node": "node_5"
-    },
-    {
-      "id": "conn_5",
-      "from_node": "node_5",
-      "to_node": "node_6"
-    },
-    {
-      "id": "conn_6",
-      "from_node": "node_6",
-      "to_node": "node_7"
-    }
-  ]
+  "connections": []
 }

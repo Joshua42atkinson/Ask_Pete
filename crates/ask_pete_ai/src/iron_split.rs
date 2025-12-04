@@ -93,7 +93,7 @@ impl IronSplitSystem {
         }
 
         // 2. Generation Loop (Incremental)
-        for i in 0..max_tokens {
+        for _ in 0..max_tokens {
             let input = Tensor::new(&[next_token], &self.device)?.unsqueeze(0)?;
             let start_pos = tokens.len() - 1; // Position of the new token
             let logits = model.forward(&input, start_pos)?;

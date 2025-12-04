@@ -398,3 +398,53 @@ pub fn handle_start_quest(mut events: EventReader<crate::components::StartQuestE
         // Logic to start quest would go here
     }
 }
+
+// [NEW] MVP Repair: Story Driver System
+// Drives the narrative forward based on Physics (Velocity)
+pub fn story_driver_system(
+    query: Query<(&TrainVelocity, &StoryProgress)>,
+    mut ask_pete_writer: EventWriter<AskPeteEvent>,
+    shared_graph_manager: Res<SharedGraphManagerResource>,
+    time: Res<Time>,
+    mut last_trigger: Local<f32>, // Debounce timer
+) {
+    // Debounce: Only check every 2 seconds to avoid spamming
+    if time.elapsed_seconds() - *last_trigger < 2.0 {
+        return;
+    }
+
+    if let Ok((velocity, progress)) = query.get_single() {
+        // Trigger if moving and we have a graph loaded
+        if velocity.0 > 0.0 {
+            if let Ok(mut manager) = shared_graph_manager.0.write() {
+                // If we have a current node, send it!
+                if let Some(node) = manager.get_current_node() {
+                    // Check if we already visited/processed this node in history to avoid repeats
+                    // (Simple check: is the last history item == current node id?)
+                    let already_played = progress
+                        .history
+                        .last()
+                        .map(|id| id == &node.id)
+                        .unwrap_or(false);
+
+                    if !already_played {
+                        info!("Story Driver: Arriving at Node {}", node.title);
+
+                        // Send content to Pete (The AI Narrator)
+                        ask_pete_writer.send(AskPeteEvent {
+                            content: format!("Narrate this story node: {}", node.content),
+                            context: format!("Current Node: {}", node.title),
+                        });
+
+                        *last_trigger = time.elapsed_seconds();
+
+                        // In a real system, we'd mark it visited here or wait for completion
+                        // For MVP, we just fire and forget, relying on the user to click "Next"
+                        // or the AI to handle the flow.
+                        // Ideally, we advance the graph manager index *after* the event.
+                    }
+                }
+            }
+        }
+    }
+}

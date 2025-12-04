@@ -1,3 +1,4 @@
+pub mod weigh_station;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

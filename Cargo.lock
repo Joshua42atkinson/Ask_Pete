@@ -446,6 +446,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "uuid 1.19.0",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -697,7 +698,6 @@ version = "0.1.0"
 dependencies = [
  "ask_pete_core",
  "gloo-console",
- "gloo-net 0.5.0",
  "gloo-timers",
  "leptos 0.8.14",
  "leptos_router 0.8.10",

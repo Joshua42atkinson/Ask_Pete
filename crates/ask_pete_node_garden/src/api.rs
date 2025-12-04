@@ -1,5 +1,6 @@
 use leptos::prelude::ServerFnError;
-use leptos::*;
+use pete_core::expert::StoryGraph;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -31,20 +32,8 @@ pub struct CharacterProfile {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ReflectionData {
-    pub archetype: String,
-    pub virtue_focus: String,
-    pub dilemma_choice: String, // "A", "B", "C", or "D"
+    pub focus_area: Option<String>,
 }
-
-#[server]
-pub async fn submit_reflection(data: ReflectionData) -> Result<(), ServerFnError> {
-    // Here, we would bridge to Bevy to spawn the entity.
-    // let world =... (Access Bevy World);
-    println!("Received Reflection: {:?}", data);
-    Ok(())
-}
-
-// --- AI Mirror API Client ---
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SendMessageRequest {
@@ -67,12 +56,14 @@ pub struct CreateSessionResponse {
 }
 
 pub async fn create_session() -> Result<Uuid, String> {
-    let res = gloo_net::http::Request::post("/api/ai-mirror/create-session")
+    let client = Client::new();
+    let res = client
+        .post("/api/ai-mirror/create-session")
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         let body: CreateSessionResponse = res.json().await.map_err(|e| e.to_string())?;
         Ok(body.session_id)
     } else {
@@ -81,14 +72,15 @@ pub async fn create_session() -> Result<Uuid, String> {
 }
 
 pub async fn send_message(req: SendMessageRequest) -> Result<SendMessageResponse, String> {
-    let res = gloo_net::http::Request::post("/api/ai-mirror/send-message")
+    let client = Client::new();
+    let res = client
+        .post("/api/ai-mirror/send-message")
         .json(&req)
-        .map_err(|e| e.to_string())?
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         let body: SendMessageResponse = res.json().await.map_err(|e| e.to_string())?;
         Ok(body)
     } else {
@@ -98,15 +90,17 @@ pub async fn send_message(req: SendMessageRequest) -> Result<SendMessageResponse
 
 // --- Expert Module API ---
 
-use pete_core::expert::StoryGraph;
+pub async fn get_graph(id: Option<String>) -> Result<StoryGraph, String> {
+    let client = Client::new();
+    let url = if let Some(graph_id) = id {
+        format!("/api/story_graphs/{}", graph_id)
+    } else {
+        "/api/expert/graph".to_string() // Fallback to "current" or "latest"
+    };
 
-pub async fn get_graph() -> Result<StoryGraph, String> {
-    let res = gloo_net::http::Request::get("/api/expert/graph")
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
+    let res = client.get(&url).send().await.map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         let graph: StoryGraph = res.json().await.map_err(|e| e.to_string())?;
         Ok(graph)
     } else {
@@ -115,14 +109,15 @@ pub async fn get_graph() -> Result<StoryGraph, String> {
 }
 
 pub async fn save_graph(graph: StoryGraph) -> Result<StoryGraph, String> {
-    let res = gloo_net::http::Request::post("/api/expert/graph")
+    let client = Client::new();
+    let res = client
+        .post("/api/expert/graph")
         .json(&graph)
-        .map_err(|e| e.to_string())?
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         let saved_graph: StoryGraph = res.json().await.map_err(|e| e.to_string())?;
         Ok(saved_graph)
     } else {
@@ -154,12 +149,14 @@ pub struct DownloadRequest {
 }
 
 pub async fn get_models() -> Result<Vec<ModelInfo>, String> {
-    let res = gloo_net::http::Request::get("/api/models")
+    let client = Client::new();
+    let res = client
+        .get("/api/models")
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         let models: Vec<ModelInfo> = res.json().await.map_err(|e| e.to_string())?;
         Ok(models)
     } else {
@@ -169,14 +166,15 @@ pub async fn get_models() -> Result<Vec<ModelInfo>, String> {
 
 pub async fn download_model(model_id: String) -> Result<(), String> {
     let req = DownloadRequest { model_id };
-    let res = gloo_net::http::Request::post("/api/models/download")
+    let client = Client::new();
+    let res = client
+        .post("/api/models/download")
         .json(&req)
-        .map_err(|e| e.to_string())?
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         Ok(())
     } else {
         Err(format!("Failed to start download: {}", res.status()))
@@ -184,12 +182,14 @@ pub async fn download_model(model_id: String) -> Result<(), String> {
 }
 
 pub async fn get_download_progress() -> Result<DownloadProgress, String> {
-    let res = gloo_net::http::Request::get("/api/models/progress")
+    let client = Client::new();
+    let res = client
+        .get("/api/models/progress")
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         let progress: DownloadProgress = res.json().await.map_err(|e| e.to_string())?;
         Ok(progress)
     } else {
@@ -225,12 +225,14 @@ pub struct VoteRequest {
 }
 
 pub async fn fetch_campaign_state() -> Result<CampaignState, String> {
-    let res = gloo_net::http::Request::get("/api/campaign/state")
+    let client = Client::new();
+    let res = client
+        .get("/api/campaign/state")
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         let state: CampaignState = res.json().await.map_err(|e| e.to_string())?;
         Ok(state)
     } else {
@@ -243,14 +245,15 @@ pub async fn submit_vote(campaign_id: String, option_index: usize) -> Result<(),
         campaign_id,
         option_index,
     };
-    let res = gloo_net::http::Request::post("/api/campaign/vote")
+    let client = Client::new();
+    let res = client
+        .post("/api/campaign/vote")
         .json(&req)
-        .map_err(|e| e.to_string())?
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         Ok(())
     } else {
         Err(format!("Failed to submit vote: {}", res.status()))
@@ -269,6 +272,7 @@ pub struct CreateCharacterRequest {
 pub async fn create_character(req: CreateCharacterRequest) -> Result<(), String> {
     // In a real app, this would POST to /api/character/create
     // For now, we'll just log it to console as a mock
-    gloo_console::info!(format!("Creating character: {:?}", req));
+    // PII SAFE: Logging removed for privacy compliance
+    // gloo_console::info!(format!("Creating character: {:?}", req));
     Ok(())
 }

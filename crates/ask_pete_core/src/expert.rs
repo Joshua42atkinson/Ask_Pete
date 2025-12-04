@@ -27,6 +27,15 @@ pub struct StoryNode {
 
     #[serde(default)]
     pub style: NodeStyle, // [NEW] CRAP Styling
+
+    #[serde(default)]
+    pub quest: Option<crate::Quest>, // [NEW] Syncs Node with Quest System
+
+    // [NEW] Weigh Station Fields
+    #[serde(default)]
+    pub mass: Option<f32>, // Cognitive Load Weight (calculated by AI)
+    #[serde(default)]
+    pub analysis_hash: Option<String>, // Hash of content to detect changes
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

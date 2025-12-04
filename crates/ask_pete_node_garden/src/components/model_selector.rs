@@ -8,16 +8,23 @@ use leptos::task::spawn_local;
 #[component]
 pub fn ModelSelector() -> impl IntoView {
     let (models, set_models) = signal(Vec::<ModelInfo>::new());
+    let (loading, set_loading) = signal(true);
     let (progress, set_progress) = signal(DownloadProgress::default());
     let (is_polling, set_is_polling) = signal(false);
     let (error_msg, set_error_msg) = signal(None::<String>);
 
-    // Fetch models on mount
+    // Load models on mount
     Effect::new(move |_| {
         spawn_local(async move {
             match crate::api::get_models().await {
-                Ok(list) => set_models.set(list),
-                Err(e) => set_error_msg.set(Some(e)),
+                Ok(list) => {
+                    set_models.set(list);
+                    set_loading.set(false);
+                }
+                Err(e) => {
+                    set_error_msg.set(Some(format!("Error loading models: {}", e)));
+                    set_loading.set(false);
+                }
             }
         });
     });
@@ -39,9 +46,11 @@ pub fn ModelSelector() -> impl IntoView {
                             if status == "completed" || status == "error" || status == "idle" {
                                 set_is_polling.set(false);
                                 // Refresh model list to show checkmark
-                                if let Ok(list) = crate::api::get_models().await {
-                                    set_models.set(list);
-                                }
+                                spawn_local(async move {
+                                    if let Ok(list) = crate::api::get_models().await {
+                                        set_models.set(list);
+                                    }
+                                });
                                 break;
                             }
                         }
@@ -114,76 +123,78 @@ pub fn ModelSelector() -> impl IntoView {
                     </Show>
 
                     // Engine Selection Grid
-                    <div class="grid gap-6">
-                        <For
-                            each=move || models.get()
-                            key=|m| m.id.clone()
-                            children=move |model| {
-                                let m_id = model.id.clone();
-                                let model_downloaded = model.downloaded;
+                    <Show when=move || !loading.get() fallback=move || view! { <div class="text-center text-purdue-dust animate-pulse">"Loading engines..."</div> }>
+                        <div class="grid gap-6">
+                            <For
+                                each=move || models.get()
+                                key=|m| m.id.clone()
+                                children=move |model| {
+                                    let m_id = model.id.clone();
+                                    let model_downloaded = model.downloaded;
 
-                                // Map model names to industrial variants
-                                let (engine_name, engine_desc) = if model.name.contains("small") || model.name.contains("1b") {
-                                    ("Speedy Pete", "Lightweight. Fast.  Efficient.")
-                                } else {
-                                    ("Deep Thinker Pete", "Heavy Duty. Nuanced. Powerful.")
-                                };
+                                    // Map model names to industrial variants
+                                    let (engine_name, engine_desc) = if model.name.contains("small") || model.name.contains("1b") {
+                                        ("Speedy Pete", "Lightweight. Fast.  Efficient.")
+                                    } else {
+                                        ("Deep Thinker Pete", "Heavy Duty. Nuanced. Powerful.")
+                                    };
 
-                                view! {
-                                    <div class="group p-6 bg-purdue-dark/30 chamfered-corners border border-old-gold/30 hover:border-old-gold transition-all duration-300 gold-glow-hover">
-                                        <div class="flex items-start justify-between gap-4">
-                                            <div class="flex-1">
-                                                <div class="flex items-center gap-3 mb-2">
-                                                    <div class="w-10 h-10 bg-old-gold/20 border border-old-gold chamfered-corners flex items-center justify-center">
-                                                        <svg class="w-6 h-6 text-old-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                                                        </svg>
+                                    view! {
+                                        <div class="group p-6 bg-purdue-dark/30 chamfered-corners border border-old-gold/30 hover:border-old-gold transition-all duration-300 gold-glow-hover">
+                                            <div class="flex items-start justify-between gap-4">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center gap-3 mb-2">
+                                                        <div class="w-10 h-10 bg-old-gold/20 border border-old-gold chamfered-corners flex items-center justify-center">
+                                                            <svg class="w-6 h-6 text-old-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                                            </svg>
+                                                        </div>
+                                                        <div>
+                                                            <h3 class="text-xl font-black text-steam-white uppercase tracking-wide">{engine_name}</h3>
+                                                            <p class="text-xs text-old-gold font-mono uppercase tracking-widest">{engine_desc}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <h3 class="text-xl font-black text-steam-white uppercase tracking-wide">{engine_name}</h3>
-                                                        <p class="text-xs text-old-gold font-mono uppercase tracking-widest">{engine_desc}</p>
+                                                    <div class="mt-3 space-y-1">
+                                                        <div class="text-sm text-purdue-dust font-mono">
+                                                            <span class="text-steam-white">"Capacity: "</span>
+                                                            {model.size.clone()}
+                                                        </div>
+                                                        <div class="text-xs text-purdue-dust/70 font-mono">
+                                                            <span class="text-steam-white/70">"ID: "</span>
+                                                            {model.id.clone()}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div class="mt-3 space-y-1">
-                                                    <div class="text-sm text-purdue-dust font-mono">
-                                                        <span class="text-steam-white">"Capacity: "</span>
-                                                        {model.size.clone()}
-                                                    </div>
-                                                    <div class="text-xs text-purdue-dust/70 font-mono">
-                                                        <span class="text-steam-white/70">"ID: "</span>
-                                                        {model.id.clone()}
-                                                    </div>
-                                                </div>
-                                            </div>
 
-                                            <Show
-                                                when=move || model_downloaded
-                                                fallback=move || {
-                                                    let m_id = m_id.clone();
-                                                    view! {
-                                                        <MechanicalButton
-                                                            primary=true
-                                                            on_click=Callback::new(move |_: MouseEvent| handle_download.get_value()(m_id.clone()))
-                                                            class="whitespace-nowrap"
-                                                        >
-                                                            "Forge"
-                                                        </MechanicalButton>
+                                                <Show
+                                                    when=move || model_downloaded
+                                                    fallback=move || {
+                                                        let m_id = m_id.clone();
+                                                        view! {
+                                                            <MechanicalButton
+                                                                primary=true
+                                                                on_click=Callback::new(move |_: MouseEvent| handle_download.get_value()(m_id.clone()))
+                                                                class="whitespace-nowrap"
+                                                            >
+                                                                "Forge"
+                                                            </MechanicalButton>
+                                                        }
                                                     }
-                                                }
-                                            >
-                                                <div class="flex items-center text-gauge-green gap-2 px-4 py-2 bg-gauge-green/10 chamfered-corners border border-gauge-green">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                    </svg>
-                                                    <span class="text-sm font-bold font-mono uppercase">"Operational"</span>
-                                                </div>
-                                            </Show>
+                                                >
+                                                    <div class="flex items-center text-gauge-green gap-2 px-4 py-2 bg-gauge-green/10 chamfered-corners border border-gauge-green">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                        </svg>
+                                                        <span class="text-sm font-bold font-mono uppercase">"Operational"</span>
+                                                    </div>
+                                                </Show>
+                                            </div>
                                         </div>
-                                    </div>
+                                    }
                                 }
-                            }
-                        />
-                    </div>
+                            />
+                        </div>
+                    </Show>
                 </div>
             </ChamferedPanel>
         </div>

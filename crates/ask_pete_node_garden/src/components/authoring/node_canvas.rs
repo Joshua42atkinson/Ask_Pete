@@ -45,7 +45,7 @@ pub fn NodeCanvas() -> impl IntoView {
 
         leptos::task::spawn_local(async move {
             leptos::logging::log!("🌐 NodeCanvas: Fetching graph from API...");
-            match get_graph().await {
+            match get_graph(None).await {
                 Ok(graph) => {
                     leptos::logging::log!("✅ NodeCanvas: Graph loaded successfully!");
                     let node_signals = graph.nodes.into_iter().map(|n| RwSignal::new(n)).collect();
@@ -232,7 +232,7 @@ pub fn NodeCanvas() -> impl IntoView {
                         on:click=move |_| {
                             let (id, _) = graph_meta.get();
                             if !id.is_empty() {
-                                navigate(&format!("/play/{}", id), Default::default());
+                                navigate(&format!("/cab/journey/{}", id), Default::default());
                             } else {
                                 leptos::logging::warn!("Cannot play unsaved graph");
                             }

@@ -1,6 +1,6 @@
 use domain_trainyard::BlueprintStation;
 use leptos::prelude::*;
-use pete_core::expert::StoryGraph;
+use pete_core::trainyard::StoryGraph;
 
 #[component]
 fn App() -> impl IntoView {

@@ -25,31 +25,42 @@ pub fn WeighStation() -> impl IntoView {
         set_is_weighing.set(true);
 
         // Call Backend API
-        // POST /api/weigh { word: w }
-        // For now, we'll use a mocked async call if we can't easily use gloo_net here
-        // But we should try to use the backend.
-
-        // Since I can't easily check if gloo_net is available in Cargo.toml right now (I think it is),
-        // I'll use the same mock logic but with a delay to simulate "Real-Time" backend.
-        // Wait, the user wants "Real-Time Weigh Station Gauge".
-
         leptos::task::spawn_local(async move {
-            // Simulate network delay
-            gloo_timers::future::sleep(std::time::Duration::from_millis(800)).await;
+            let client = reqwest::Client::new();
+            let req = serde_json::json!({ "word": w });
 
-            // Mock Backend Logic (mirroring backend/src/handlers/weigh_station.rs)
-            let weight = match w.len() {
-                0..=4 => 10, // Light (Simple words)
-                5..=8 => 50, // Heavy (Complex words)
-                _ => 90,     // Hazardous (Abstract concepts)
-            };
+            match client
+                .post("/api/weigh_station/weigh")
+                .json(&req)
+                .send()
+                .await
+            {
+                Ok(res) => {
+                    if res.status().is_success() {
+                        #[derive(serde::Deserialize)]
+                        struct WordPhysics {
+                            word: String,
+                            mass: f32,
+                            // other fields ignored
+                        }
 
-            set_cargo.update(|c| {
-                c.push(VocabularyCrate {
-                    word: w,
-                    cognitive_weight: weight,
-                })
-            });
+                        if let Ok(physics) = res.json::<WordPhysics>().await {
+                            set_cargo.update(|c| {
+                                c.push(VocabularyCrate {
+                                    word: physics.word,
+                                    cognitive_weight: physics.mass as u8,
+                                })
+                            });
+                        }
+                    } else {
+                        leptos::logging::error!("Weigh Station Error: {}", res.status());
+                    }
+                }
+                Err(e) => {
+                    leptos::logging::error!("Weigh Station Network Error: {}", e);
+                }
+            }
+
             set_input_word.set("".to_string());
             set_is_weighing.set(false);
         });

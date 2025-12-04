@@ -6,7 +6,7 @@ use crate::authoring::story_node::StoryNodeComponent;
 use crate::authoring::template_selector::TemplateSelector;
 use crate::authoring::word_smithy::WordSmithy;
 use leptos::prelude::*;
-use pete_core::expert::{Connection, StoryGraph, StoryNode};
+use pete_core::trainyard::{Connection, StoryGraph, StoryNode};
 
 #[component]
 pub fn NodeCanvas() -> impl IntoView {
@@ -38,16 +38,13 @@ pub fn NodeCanvas() -> impl IntoView {
 
     // Load graph on mount
     Effect::new(move |_| {
-        leptos::logging::log!("🎨 NodeCanvas: Starting graph load...");
         set_loading.set(true);
-        set_error_message.set(None);
-
         leptos::task::spawn_local(async move {
-            leptos::logging::log!("🌐 NodeCanvas: Fetching graph from API...");
+            leptos::logging::log!("🌐 NodeCanvas: Fetching graph...");
             match get_graph().await {
                 Ok(graph) => {
                     leptos::logging::log!(
-                        "✅ NodeCanvas: Graph loaded successfully! Node count: {}",
+                        "✅ NodeCanvas: Graph loaded! Node count: {}",
                         graph.nodes.len()
                     );
                     let node_signals = graph.nodes.into_iter().map(|n| RwSignal::new(n)).collect();
@@ -85,6 +82,7 @@ pub fn NodeCanvas() -> impl IntoView {
                 },
                 nodes: current_nodes,
                 connections: current_connections,
+                metadata: std::collections::HashMap::new(),
             };
 
             match save_graph(graph).await {
@@ -198,6 +196,7 @@ pub fn NodeCanvas() -> impl IntoView {
                         id: uuid::Uuid::new_v4().to_string(),
                         from_node: source_id,
                         to_node: node_id,
+                        connection_type: Default::default(),
                     });
                 });
                 set_connecting_source.set(None);

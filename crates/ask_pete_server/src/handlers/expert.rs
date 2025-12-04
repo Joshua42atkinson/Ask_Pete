@@ -40,6 +40,9 @@ pub async fn get_graph(State(app_state): State<AppState>) -> Result<Json<StoryGr
                     required_stats: std::collections::HashMap::new(),
                     logic: Default::default(),
                     style: Default::default(),
+                    quest: None,
+                    mass: None,
+                    analysis_hash: None,
                 }],
                 connections: vec![],
             };
@@ -135,6 +138,11 @@ pub async fn save_graph(
         tracing::error!("Database error: {:?}", e);
         AppError::InternalServerError
     })?;
+
+    // Update in-memory GraphManager for the Physics Engine
+    if let Ok(mut manager) = app_state.shared_graph_manager.write() {
+        manager.load_graph(payload.clone());
+    }
 
     Ok(Json(payload))
 }

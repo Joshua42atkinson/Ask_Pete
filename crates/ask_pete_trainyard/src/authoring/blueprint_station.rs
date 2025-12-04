@@ -1,6 +1,6 @@
 use crate::authoring::common_ui::Tooltip;
 use leptos::prelude::*;
-use pete_core::expert::StoryGraph;
+use pete_core::trainyard::StoryGraph;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

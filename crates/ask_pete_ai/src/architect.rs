@@ -77,6 +77,24 @@ impl CurriculumArchitect {
                             "logic": {{
                                 "condition": "None", 
                                 "effect": "None"
+                            }},
+                            "quest": {{
+                                "title": "Quest Title",
+                                "chapter_theme": "Theme (e.g. 'The Call')",
+                                "description": "Quest Description",
+                                "starting_step": "step_1",
+                                "completion_reward": {{
+                                    "type": "xp",
+                                    "value": 100
+                                }},
+                                "steps": {{
+                                    "step_1": {{
+                                        "description": "Step 1 Description",
+                                        "trigger_condition": "None",
+                                        "next_step": "None",
+                                        "is_major_plot_point": true
+                                    }}
+                                }}
                             }}
                         }}
                     ],

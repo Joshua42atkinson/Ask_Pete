@@ -17,7 +17,7 @@ wasm-bindgen = { workspace = true }
 gloo-net = { workspace = true }
 gloo-timers = { workspace = true }
 gloo-console = { workspace = true }
-web-sys = { workspace = true, features = ["console", "Window", "Document", "HtmlElement", "Element", "Node", "DomRect", "Storage"] }
+web-sys = { workspace = true, features = ["console", "Window", "Document", "HtmlDocument", "HtmlElement", "Element", "Node", "DomRect", "Storage"] }
 anyhow = { workspace = true }
 uuid = { workspace = true, features = ["v4", "serde"] }
 chrono = { workspace = true, features = ["serde"] }

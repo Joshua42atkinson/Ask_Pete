@@ -1,13 +1,15 @@
-use gloo_net::http::Request;
-use pete_core::expert::StoryGraph;
+use pete_core::trainyard::StoryGraph;
+use reqwest::Client;
 
 pub async fn get_graph() -> Result<StoryGraph, String> {
-    let res = Request::get("/api/expert/graph")
+    let client = Client::new();
+    let res = client
+        .get("/api/expert/graph")
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         let graph: StoryGraph = res.json().await.map_err(|e| e.to_string())?;
         Ok(graph)
     } else {
@@ -16,14 +18,15 @@ pub async fn get_graph() -> Result<StoryGraph, String> {
 }
 
 pub async fn save_graph(graph: StoryGraph) -> Result<StoryGraph, String> {
-    let res = Request::post("/api/expert/graph")
+    let client = Client::new();
+    let res = client
+        .post("/api/expert/graph")
         .json(&graph)
-        .map_err(|e| e.to_string())?
         .send()
         .await
         .map_err(|e| e.to_string())?;
 
-    if res.ok() {
+    if res.status().is_success() {
         let saved_graph: StoryGraph = res.json().await.map_err(|e| e.to_string())?;
         Ok(saved_graph)
     } else {

@@ -25,21 +25,16 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::timeout::TimeoutLayer;
 
 mod ai;
-mod antigravity;
-mod core; // Plugin system traits
-mod data;
 mod domain;
 mod error;
-mod game;
 mod handlers;
 mod middleware;
-mod plugins; // Plugin registry and implementations
-mod routes;
-mod services; // Model Manager and Pete AI
-mod state;
-pub use state::AppState;
 mod repositories; // [NEW]
+mod routes;
+mod services;
+mod state;
 mod static_assets;
+mod systems; // [NEW]
 use crate::domain::player::get_simulated_character;
 use crate::routes::ai_mirror::ai_mirror_routes;
 use crate::routes::campaign_routes::campaign_routes;
@@ -56,16 +51,46 @@ use axum::response::IntoResponse;
 use axum::Router;
 use bevy::core::Name;
 use bevy::prelude::*;
+pub use state::AppState;
 // use bevy_yarnspinner::events::{DialogueCompleteEvent, ExecuteCommandEvent};
 // use bevy_yarnspinner::prelude::*;
 use domain_physics::components::{
-    Archetype, AskPeteEvent, Coal, CognitiveLoad, DownloadCommandInbox, DownloadProgressEvent,
-    EnginePower, Experience, Level, Location, Mass, Persona, PeteCommandInbox, PeteResponseEvent,
-    PeteResponseOutbox, PhysicsState, PlayWhistleEvent, QuestCommandInbox, ResearchLog,
-    SharedCampaignStateResource, SharedDownloadStateResource, SharedPhysicsResource,
-    SharedResearchLogResource, SharedStoryProgressResource, SharedVirtuesResource, StallEvent,
-    StartDownloadEvent, StartQuestEvent, Steam, StoryProgress, StudentBundle, StudentMiles,
-    TrainVelocity, VirtueTopology, VoteInbox,
+    Archetype,
+    AskPeteEvent,
+    Coal,
+    CognitiveLoad,
+    DownloadCommandInbox,
+    DownloadProgressEvent,
+    EnginePower,
+    Experience,
+    Level,
+    Location,
+    Mass,
+    Persona,
+    PeteCommandInbox,
+    PeteResponseEvent,
+    PeteResponseOutbox,
+    PhysicsState,
+    PlayWhistleEvent,
+    QuestCommandInbox,
+    ResearchLog,
+    SharedCampaignStateResource,
+    SharedDownloadStateResource,
+    SharedGraphManagerResource, // [NEW]
+    SharedPhysicsResource,
+    SharedResearchLogResource,
+    SharedStoryProgressResource,
+    SharedVirtuesResource,
+    StallEvent,
+    StartDownloadEvent,
+    StartQuestEvent,
+    Steam,
+    StoryProgress,
+    StudentBundle,
+    StudentMiles,
+    TrainVelocity,
+    VirtueTopology,
+    VoteInbox,
 };
 use domain_physics::multiplayer_client::{CampaignState, MultiplayerPlugin};
 use domain_physics::systems::*;
@@ -87,6 +112,9 @@ fn run_bevy_app(
     vote_inbox: VoteInbox,
     shared_story_progress: SharedStoryProgressResource,
     quest_command_inbox: QuestCommandInbox,
+    shared_graph_manager: SharedGraphManagerResource, // [NEW]
+    weigh_station: Option<Arc<crate::services::weigh_station::WeighStationService>>, // [NEW]
+    tokio_handle: tokio::runtime::Handle,             // [NEW]
 ) {
     let mut app = App::new();
     app.add_plugins(MinimalPlugins);
@@ -117,6 +145,13 @@ fn run_bevy_app(
     app.insert_resource(vote_inbox);
     app.insert_resource(shared_story_progress);
     app.insert_resource(quest_command_inbox);
+    app.insert_resource(shared_graph_manager); // [NEW]
+    app.insert_resource(
+        crate::systems::weigh_station_system::SharedWeighStationResource(weigh_station),
+    ); // [NEW]
+    app.insert_resource(crate::systems::weigh_station_system::SharedTokioHandle(
+        tokio_handle,
+    )); // [NEW]
 
     // Register Systems
     app.add_systems(
@@ -141,6 +176,8 @@ fn run_bevy_app(
             generate_steam,
             sync_quest_inbox,
             handle_start_quest,
+            story_driver_system, // [NEW] Drives the narrative based on velocity
+            crate::systems::weigh_station_system::weigh_station_system, // [NEW]
         ),
     );
 
@@ -242,6 +279,9 @@ async fn main() {
     let shared_story_progress =
         SharedStoryProgressResource(Arc::new(RwLock::new(StoryProgress::default())));
     let quest_command_inbox = QuestCommandInbox(Arc::new(RwLock::new(Vec::new())));
+    let shared_graph_manager = SharedGraphManagerResource(Arc::new(RwLock::new(
+        pete_core::graph_manager::GraphManager::new(),
+    ))); // [NEW]
 
     let state_clone = download_state.clone();
     let pete_inbox_clone = pete_command_inbox.clone();
@@ -251,27 +291,6 @@ async fn main() {
     let vote_inbox_clone = vote_inbox.clone();
     let story_progress_clone = shared_story_progress.clone();
     let quest_inbox_clone = quest_command_inbox.clone();
-
-    let log_clone = shared_research_log.clone();
-    let virtues_clone = shared_virtues.clone();
-    let inbox_clone = download_inbox.clone();
-
-    thread::spawn(move || {
-        run_bevy_app(
-            log_clone,
-            virtues_clone,
-            physics_clone,
-            inbox_clone,
-            state_clone,
-            pete_inbox_clone,
-            pete_outbox_clone,
-            campaign_clone,
-            vote_inbox_clone,
-            story_progress_clone,
-            quest_inbox_clone,
-        )
-    });
-
     let conf = get_configuration(None).unwrap();
     let leptos_options = conf.leptos_options;
     // Cloud Run Support: Override site_addr if PORT env var is set
@@ -418,13 +437,18 @@ async fn main() {
         // We pass the optional local model. If it's None, the service will use heuristics only.
         Some(Arc::new(
             crate::services::weigh_station::WeighStationService::new(
-                db_pool,
+                Some(db_pool),
                 shared_local_model.clone(),
             ),
         ))
     } else {
-        println!("⚠️ Database not available, Weigh Station disabled.");
-        None
+        println!("⚠️ Database not available, using Heuristic Weigh Station.");
+        Some(Arc::new(
+            crate::services::weigh_station::WeighStationService::new(
+                None,
+                shared_local_model.clone(),
+            ),
+        ))
     };
 
     // Initialize Quest Repository
@@ -438,6 +462,45 @@ async fn main() {
 
     // Initialize Chat Queue Service
     let chat_queue = crate::services::chat_queue::ChatQueueService::new(socratic_engine.clone());
+
+    // --- Spawn Bevy Thread ---
+    let state_clone = download_state.clone();
+    let pete_inbox_clone = pete_command_inbox.clone();
+    let pete_outbox_clone = pete_response_outbox.clone();
+    let physics_clone = shared_physics.clone();
+    let campaign_clone = shared_campaign_state.clone();
+    let vote_inbox_clone = vote_inbox.clone();
+    let story_progress_clone = shared_story_progress.clone();
+    let quest_inbox_clone = quest_command_inbox.clone();
+    let graph_manager_clone = shared_graph_manager.clone();
+    let weigh_station_clone = weigh_station.clone();
+
+    let log_clone = shared_research_log.clone();
+    let virtues_clone = shared_virtues.clone();
+    let inbox_clone = download_inbox.clone();
+
+    // Capture the handle to the Tokio runtime
+    let tokio_handle = tokio::runtime::Handle::current();
+
+    thread::spawn(move || {
+        run_bevy_app(
+            log_clone,
+            virtues_clone,
+            physics_clone,
+            inbox_clone,
+            state_clone,
+            pete_inbox_clone,
+            pete_outbox_clone,
+            campaign_clone,
+            vote_inbox_clone,
+            story_progress_clone,
+            quest_inbox_clone,
+            graph_manager_clone,
+            weigh_station_clone,
+            tokio_handle, // [NEW]
+        )
+    });
+    // -------------------------
 
     // Create the application state
     let app_state = AppState {
@@ -459,8 +522,9 @@ async fn main() {
         vote_inbox,
         shared_story_progress: shared_story_progress.0,
         quest_command_inbox,
-        quest_repo, // [NEW]
-                    // memory_store,
+        shared_graph_manager: shared_graph_manager.0, // [NEW]
+        quest_repo,                                   // [NEW]
+                                                      // memory_store,
     };
 
     // Create Model App State
@@ -494,7 +558,7 @@ async fn main() {
         .merge(crate::routes::pete::pete_routes(&app_state))
         .merge(crate::routes::recharge::recharge_routes(&app_state))
         .merge(crate::routes::simulation::simulation_routes())
-        .merge(ai_mirror_routes())
+        .nest("/api/ai-mirror", ai_mirror_routes())
         .nest(
             "/api/models",
             crate::routes::model_routes::model_routes().with_state(model_app_state),

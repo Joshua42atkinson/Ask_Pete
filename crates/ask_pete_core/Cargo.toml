@@ -7,6 +7,7 @@ license = "Apache-2.0"
 [dependencies]
 # Main serialization library, used by everything
 serde = { workspace = true, features = ["derive"] }
+uuid = { workspace = true, features = ["v4", "serde"] }
 
 # Used by our static loaders to parse the .json files
 serde_json = { workspace = true }

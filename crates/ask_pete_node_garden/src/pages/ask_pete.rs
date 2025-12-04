@@ -110,7 +110,7 @@ fn PeteTerminal() -> impl IntoView {
     // Fetch the graph on load
     Effect::new(move |_| {
         spawn_local(async move {
-            match crate::api::get_graph().await {
+            match crate::api::get_graph(None).await {
                 Ok(graph) => {
                     // Initialize Engine with fetched graph
                     set_engine.set(Some(GameEngine::new(graph)));
@@ -130,7 +130,7 @@ fn PeteTerminal() -> impl IntoView {
 
     let restart = move |_| {
         spawn_local(async move {
-            if let Ok(graph) = crate::api::get_graph().await {
+            if let Ok(graph) = crate::api::get_graph(None).await {
                 set_engine.set(Some(GameEngine::new(graph)));
             }
         });
