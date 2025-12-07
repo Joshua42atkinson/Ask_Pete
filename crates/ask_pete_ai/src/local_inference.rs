@@ -29,14 +29,14 @@ impl Default for GenerationConfig {
 
 /// Configuration for local model (Mistral via GGUF)
 #[derive(Clone)]
-pub struct GemmaConfigWrapper {
+pub struct LocalModelConfig {
     pub model_path: PathBuf,
     pub tokenizer_path: PathBuf,
     pub max_context_length: usize,
     pub seed: u64,
 }
 
-impl Default for GemmaConfigWrapper {
+impl Default for LocalModelConfig {
     fn default() -> Self {
         // Look for the model in the Ask_Pete/models directory
         // We check relative paths assuming we are running from the workspace root or a crate dir
@@ -85,24 +85,23 @@ impl Default for GemmaConfigWrapper {
     }
 }
 
-struct GemmaState {
+struct LocalModelState {
     model: QLlama,
     tokenizer: Tokenizer,
     device: Device,
 }
 
 #[derive(Clone)]
-pub struct GemmaModel {
-    state: Arc<Mutex<GemmaState>>,
+pub struct LocalModel {
+    state: Arc<Mutex<LocalModelState>>,
 }
 
-impl GemmaModel {
-    pub fn load(config: GemmaConfigWrapper) -> Result<Self> {
+impl LocalModel {
+    pub fn load(config: LocalModelConfig) -> Result<Self> {
         log::info!("Loading Mistral model from {:?}", config.model_path);
 
         // 1. Detect device (GPU if available, else CPU)
         let device = if candle_core::utils::cuda_is_available() {
-            log::info!("CUDA available, using GPU");
             log::info!("CUDA available, using GPU");
             Device::new_cuda(0).map_err(AiError::CandleError)?
         } else if candle_core::utils::metal_is_available() {
@@ -138,7 +137,7 @@ impl GemmaModel {
         log::info!("✅ Tokenizer loaded");
 
         Ok(Self {
-            state: Arc::new(Mutex::new(GemmaState {
+            state: Arc::new(Mutex::new(LocalModelState {
                 model,
                 tokenizer,
                 device,
@@ -158,18 +157,15 @@ impl GemmaModel {
                     poisoned.into_inner() // Recover data access
                 }
             };
-            let GemmaState {
+            let LocalModelState {
                 model,
                 tokenizer,
                 device,
             } = &mut *guard;
 
-            // 1. Tokenize input with Gemma 2 instruction format
-            // Format: <start_of_turn>user\n{prompt}\n<end_of_turn>\n<start_of_turn>model\n
-            let formatted_prompt = format!(
-                "<start_of_turn>user\n{}\n<end_of_turn>\n<start_of_turn>model\n",
-                prompt
-            );
+            // 1. Tokenize input with Mistral instruction format
+            // Format: [INST] {prompt} [/INST]
+            let formatted_prompt = format!("[INST] {} [/INST]", prompt);
 
             log::info!("Tokenizing prompt: {:.50}...", formatted_prompt);
 
@@ -183,21 +179,14 @@ impl GemmaModel {
             // 2. Generate tokens
             let mut generated_tokens = tokens.clone();
 
-            // Gemma 2 EOS tokens:
-            // 1 = <eos>
-            // 107 = <end_of_turn>
-            let eos_token = 1;
-            let eot_token = 107;
+            // Mistral EOS tokens:
+            // 2 = </s> (EOS)
+            let eos_token = 2;
 
             let max_gen = config.max_tokens.min(1024); // Cap at 1024
 
             for i in 0..max_gen {
                 // Create input tensor from all generated tokens so far
-                // Note: For efficiency, we should use KV cache, but QLlama in Candle might handle it or we need to manage it.
-                // The current QLlama implementation in Candle examples often re-processes the whole sequence if not using a specific stateful runner.
-                // However, for this MVP, re-processing is acceptable for short contexts, though slow.
-                // TODO: Optimize with KV cache if performance is too slow.
-
                 let input_ids = Tensor::new(&generated_tokens[..], device)?;
 
                 // Get logits
@@ -210,8 +199,8 @@ impl GemmaModel {
                 // Sample next token (greedy for now)
                 let next_token = logits.argmax(0)?.to_scalar::<u32>()?;
 
-                if next_token == eos_token || next_token == eot_token {
-                    log::info!("EOS/EOT token reached at position {}", i);
+                if next_token == eos_token {
+                    log::info!("EOS token reached at position {}", i);
                     break;
                 }
 
@@ -224,11 +213,6 @@ impl GemmaModel {
                 .map_err(|e| AiError::TokenizationFailed(format!("Decoding failed: {}", e)))?;
 
             // 4. Extract response
-            // We need to remove the prompt part.
-            // The prompt ends with "<start_of_turn>model\n"
-            // But the decoded output might not exactly match the input string due to tokenization artifacts.
-            // A safer way is to decode only the *new* tokens.
-
             let new_tokens = &generated_tokens[tokens.len()..];
             let response = tokenizer.decode(new_tokens, true).map_err(|e| {
                 AiError::TokenizationFailed(format!("Decoding response failed: {}", e))

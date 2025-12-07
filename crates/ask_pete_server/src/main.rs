@@ -395,6 +395,7 @@ async fn main() {
     ));
 
     // Auto-download "pete" model if missing
+    /*
     {
         let mut manager = model_manager.lock().await;
         if !manager.has_model("pete") {
@@ -410,6 +411,7 @@ async fn main() {
             println!("'pete' model found. Ready for inference.");
         }
     }
+    */
 
     let pete_assistant = Arc::new(
         crate::services::pete::PeteAssistant::new().expect("Failed to initialize PeteAssistant"),

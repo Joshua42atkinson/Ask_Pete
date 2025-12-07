@@ -11,5 +11,5 @@ pub mod prompts;
 pub mod socratic_engine;
 pub mod vocabulary;
 
-pub use local_inference::{GemmaConfigWrapper as LocalConfigWrapper, GemmaModel as LocalModel};
+pub use local_inference::{LocalModel, LocalModelConfig as LocalConfigWrapper};
 pub use socratic_engine::SocraticEngine;
